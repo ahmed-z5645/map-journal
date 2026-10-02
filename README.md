@@ -2,6 +2,16 @@
 
 A personal journal of postcards pinned on a map of Toronto. Next.js + Neon Postgres (Drizzle) + Cloudflare R2.
 
+## Try it locally (no accounts)
+
+```
+npm install
+npm run local        # embedded Postgres + local photo storage, app on http://localhost:3000
+npm run seed:local   # in another terminal: fill it with fake Toronto postcards
+```
+
+Log in with `postcards` (override with `LOCAL_PASSWORD`). Stop with Ctrl+C so the database closes cleanly. Data lives in `.local/`; `npm run local:reset` wipes it.
+
 ## Setup
 
 1. **Postgres** — create a free [Neon](https://neon.tech) project and use its **pooled** connection string (use a dev branch for local work). Any local Postgres works too.

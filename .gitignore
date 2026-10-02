@@ -10,3 +10,6 @@ next-env.d.ts
 
 # copied from node_modules on install
 public/maplibre/
+
+# local mode data (npm run local)
+.local/
