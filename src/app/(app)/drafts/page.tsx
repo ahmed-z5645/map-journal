@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listPostcards } from "@/db/queries";
 import { presignedGetUrl } from "@/lib/r2";
 
@@ -13,7 +14,8 @@ export default async function DraftsPage() {
       ) : (
         <ul className="space-y-3">
           {drafts.map((d, i) => (
-            <li key={d.id} className="flex gap-3 rounded-md bg-white p-3 shadow-sm">
+            <li key={d.id}>
+              <Link href={`/cards/${d.id}/edit`} className="flex gap-3 rounded-md bg-white p-3 shadow-sm hover:shadow-md">
               <div
                 className="h-16 w-24 shrink-0 overflow-hidden rounded bg-stone-200"
                 style={!thumbs[i] && d.frontColor ? { background: d.frontColor } : undefined}
@@ -30,6 +32,7 @@ export default async function DraftsPage() {
                 </p>
                 {d.lat == null && <p className="text-amber-700">No location yet</p>}
               </div>
+              </Link>
             </li>
           ))}
         </ul>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createDraft } from "./actions";
-import { preparePhoto, type PhotoMeta } from "./prepare-photo";
+import { preparePhoto, type PhotoMeta } from "@/lib/prepare-photo";
 
 type DeviceLocation =
   | { state: "locating" }

@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import Map, { Marker, Popup, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
+import { MAP_STYLE, TORONTO } from "@/lib/map";
 import { moveCard } from "./map-actions";
 
-const TORONTO = { latitude: 43.6532, longitude: -79.3832 };
 
 export type MapCard = {
   id: string;
@@ -36,11 +37,11 @@ function CardFront({ card, className }: { card: MapCard; className: string }) {
   );
 }
 
-export function PostcardMap({ cards: initialCards }: { cards: MapCard[] }) {
+export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]; focusId?: string }) {
   const [cards, setCards] = useState(initialCards);
   const [arranging, setArranging] = useState(false);
   const [placingId, setPlacingId] = useState<string>();
-  const [selectedId, setSelectedId] = useState<string>();
+  const [selectedId, setSelectedId] = useState(focusId);
   const [lastMove, setLastMove] = useState<Move>();
   const [error, setError] = useState<string>();
   const [, startSaving] = useTransition();
@@ -51,6 +52,7 @@ export function PostcardMap({ cards: initialCards }: { cards: MapCard[] }) {
   const visible = cards.filter(isLocated).filter((c) => arranging || c.status === "published");
   const unplaced = cards.filter((c) => c.status === "draft" && !isLocated(c));
   const selected = visible.find((c) => c.id === selectedId);
+  const focus = cards.filter(isLocated).find((c) => c.id === focusId);
 
   function setLocation(id: string, to: { lat: number | null; lng: number | null }, recordUndo = true) {
     const card = cards.find((c) => c.id === id);
@@ -81,8 +83,8 @@ export function PostcardMap({ cards: initialCards }: { cards: MapCard[] }) {
   return (
     <div className="relative h-full w-full">
       <Map
-        initialViewState={{ ...TORONTO, zoom: 12 }}
-        mapStyle="https://tiles.openfreemap.org/styles/positron"
+        initialViewState={focus ? { latitude: focus.lat, longitude: focus.lng, zoom: 14 } : { ...TORONTO, zoom: 12 }}
+        mapStyle={MAP_STYLE}
         style={{ width: "100%", height: "100%" }}
         cursor={placingId ? "crosshair" : undefined}
         onClick={(e) => {
@@ -133,7 +135,12 @@ export function PostcardMap({ cards: initialCards }: { cards: MapCard[] }) {
               <p className="mt-2 truncate font-hand text-lg leading-tight">
                 {selected.title ?? selected.quickNote ?? "Untitled"}
               </p>
-              <p className="text-xs text-stone-500">{formatDate(selected.capturedAt)}</p>
+              <div className="flex items-baseline justify-between text-xs text-stone-500">
+                <span>{formatDate(selected.capturedAt)}</span>
+                <Link href={`/cards/${selected.id}/edit`} className="underline">
+                  Edit
+                </Link>
+              </div>
             </div>
           </Popup>
         )}
