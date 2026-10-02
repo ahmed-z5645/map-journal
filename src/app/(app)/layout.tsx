@@ -8,8 +8,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const drafts = await countDrafts();
   return (
     <div className="flex h-dvh flex-col">
-      <nav className="flex items-center gap-4 border-b border-stone-200 px-4 py-2 text-sm">
-        <Link href="/" className="font-hand text-2xl">Postcards</Link>
+      <nav className="flex items-center gap-3 border-b sm:gap-4 border-stone-200 px-4 py-2 text-sm">
+        <Link href="/" className="hidden font-hand text-2xl sm:inline">Postcards</Link>
         <Link href="/">Map</Link>
         <Link href="/shoebox">Shoebox</Link>
         <Link href="/drafts" className="flex items-center gap-1">
