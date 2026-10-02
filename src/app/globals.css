@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-hand: var(--font-caveat), cursive;
+  --color-paper: #f7f3ea;
+}
+
+body {
+  @apply bg-paper text-stone-800 antialiased;
+}
