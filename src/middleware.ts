@@ -11,6 +11,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login page, PWA manifest/icons and Next internals.
-  matcher: ["/((?!login|manifest.webmanifest|icon|apple-icon|favicon.ico|_next/static|_next/image).*)"],
+  // Everything except the login page, PWA manifest/icons, the public MapLibre worker and Next internals.
+  matcher: ["/((?!login|manifest.webmanifest|icon|apple-icon|favicon.ico|maplibre/|_next/static|_next/image).*)"],
 };

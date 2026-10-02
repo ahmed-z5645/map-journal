@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { isPortrait, Postcard } from "@/components/postcard";
+import { fromTorontoInput, toTorontoInput } from "@/lib/dates";
 import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { cropPhoto, deleteDraft, removePhoto, replacePhoto, saveCard } from "./actions";
@@ -30,13 +31,6 @@ export type EditableCard = {
 
 const SWATCHES = ["#c8553d", "#2f6f8f", "#588157", "#e9c46a", "#6d597a", "#264653"];
 
-/** ISO → value for <input type="datetime-local"> in the browser's timezone. */
-function toLocalInput(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 const label = "mb-1 block text-sm font-medium text-stone-600";
 const field = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 outline-none focus:border-stone-500";
 
@@ -48,7 +42,7 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
   const [placeLabel, setPlaceLabel] = useState(card.placeLabel ?? "");
   const [frontColor, setFrontColor] = useState(card.frontColor ?? DEFAULT_FRONT_COLOR);
   const [location, setLocation] = useState(card.lat !== null && card.lng !== null ? { lat: card.lat, lng: card.lng } : null);
-  const [capturedAt, setCapturedAt] = useState(toLocalInput(card.capturedAt));
+  const [capturedAt, setCapturedAt] = useState(toTorontoInput(card.capturedAt));
   const [people, setPeople] = useState(card.people);
   const [photo, setPhoto] = useState(
     card.photoUrl
@@ -62,7 +56,7 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
   const fileInput = useRef<HTMLInputElement>(null);
 
   const isDraft = card.status === "draft";
-  const capturedIso = capturedAt ? new Date(capturedAt).toISOString() : card.capturedAt;
+  const capturedIso = capturedAt ? fromTorontoInput(capturedAt) : card.capturedAt;
   const preview = {
     photoUrl: photo?.url ?? null,
     photoWidth: photo?.width ?? null,
@@ -239,7 +233,7 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
         </div>
 
         <label>
-          <span className={label}>When</span>
+          <span className={label}>When <span className="font-normal text-stone-400">(Toronto time)</span></span>
           <input type="datetime-local" value={capturedAt} onChange={(e) => setCapturedAt(e.target.value)} className={field} />
         </label>
 

@@ -1,21 +1,20 @@
 import { listPostcards } from "@/db/queries";
+import { toPostcardViews } from "@/lib/postcard-views";
+import { Shoebox } from "./shoebox";
 
 export default async function ShoeboxPage() {
-  const cards = await listPostcards("published");
+  const rows = await listPostcards("published");
+  const views = await toPostcardViews(rows);
   return (
-    <div className="mx-auto max-w-2xl p-4">
-      <h1 className="mb-4 font-hand text-3xl">Shoebox</h1>
-      {cards.length === 0 ? (
-        <p className="text-stone-500">No published postcards yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {cards.map((c) => (
-            <li key={c.id} className="rounded-md bg-white p-3 shadow-sm">
-              {c.title ?? "Untitled"} · {c.capturedAt.toLocaleDateString("en-CA")}
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-xl px-4 py-6">
+        <h1 className="mb-6 font-hand text-4xl">Shoebox</h1>
+        {rows.length === 0 ? (
+          <p className="text-stone-500">No published postcards yet.</p>
+        ) : (
+          <Shoebox cards={rows.map((r, i) => ({ id: r.id, view: views[i] }))} />
+        )}
+      </div>
     </div>
   );
 }

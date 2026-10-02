@@ -7,3 +7,6 @@ next-env.d.ts
 !.env.example
 .DS_Store
 .vercel
+
+# copied from node_modules on install
+public/maplibre/

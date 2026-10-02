@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listPostcards } from "@/db/queries";
+import { formatDateTime } from "@/lib/dates";
 import { presignedGetUrl } from "@/lib/r2";
 
 export default async function DraftsPage() {
@@ -28,7 +29,7 @@ export default async function DraftsPage() {
               <div className="min-w-0 text-sm">
                 <p className="truncate">{d.quickNote ?? <span className="text-stone-400">No note</span>}</p>
                 <p className="text-stone-500">
-                  {d.capturedAt.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
+                  {formatDateTime(d.capturedAt)}
                 </p>
                 {d.lat == null && <p className="text-amber-700">No location yet</p>}
               </div>

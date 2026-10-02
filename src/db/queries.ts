@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from ".";
 import { people, postcardPeople, postcards } from "./schema";
 
@@ -18,20 +18,21 @@ export function listPostcards(status: "draft" | "published") {
 
 /** Everything the map needs: published cards plus drafts (shown only in Arrange mode). */
 export function listMapCards() {
-  return getDb()
-    .select({
-      id: postcards.id,
-      status: postcards.status,
-      lat: postcards.lat,
-      lng: postcards.lng,
-      frontColor: postcards.frontColor,
-      photoThumbKey: postcards.photoThumbKey,
-      title: postcards.title,
-      quickNote: postcards.quickNote,
-      capturedAt: postcards.capturedAt,
-    })
-    .from(postcards)
-    .orderBy(desc(postcards.capturedAt));
+  return getDb().select().from(postcards).orderBy(desc(postcards.capturedAt));
+}
+
+/** Tagged names per card, alphabetical. */
+export async function peopleByCard(ids: string[]) {
+  const byCard = new Map<string, string[]>();
+  if (ids.length === 0) return byCard;
+  const rows = await getDb()
+    .select({ postcardId: postcardPeople.postcardId, name: people.name })
+    .from(postcardPeople)
+    .innerJoin(people, eq(people.id, postcardPeople.personId))
+    .where(inArray(postcardPeople.postcardId, ids))
+    .orderBy(asc(people.name));
+  for (const r of rows) byCard.set(r.postcardId, [...(byCard.get(r.postcardId) ?? []), r.name]);
+  return byCard;
 }
 
 export async function getCardWithPeople(id: string) {

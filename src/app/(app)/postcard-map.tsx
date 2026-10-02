@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
-import Map, { Marker, Popup, type MarkerDragEvent } from "react-map-gl/maplibre";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import Map, { Marker, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "@/lib/maplibre-setup";
+import type { PostcardView } from "@/components/postcard";
+import { PostcardModal } from "@/components/postcard-modal";
+import { formatDate } from "@/lib/dates";
 import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
 import { MAP_STYLE, TORONTO } from "@/lib/map";
 import { moveCard } from "./map-actions";
@@ -19,6 +22,7 @@ export type MapCard = {
   title: string | null;
   quickNote: string | null;
   capturedAt: string;
+  view: PostcardView;
 };
 
 type Located = MapCard & { lat: number; lng: number };
@@ -26,7 +30,6 @@ type Move = { id: string; from: { lat: number | null; lng: number | null } };
 
 const isLocated = (c: MapCard): c is Located => c.lat !== null && c.lng !== null;
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { dateStyle: "medium" });
 
 function CardFront({ card, className }: { card: MapCard; className: string }) {
   return card.thumbUrl ? (
@@ -52,6 +55,11 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
   const visible = cards.filter(isLocated).filter((c) => arranging || c.status === "published");
   const unplaced = cards.filter((c) => c.status === "draft" && !isLocated(c));
   const selected = visible.find((c) => c.id === selectedId);
+  const closeModal = useCallback(() => {
+    setSelectedId(undefined);
+    // Drop ?card= (set after publishing) so a refresh doesn't reopen it.
+    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
+  }, []);
   const focus = cards.filter(isLocated).find((c) => c.id === focusId);
 
   function setLocation(id: string, to: { lat: number | null; lng: number | null }, recordUndo = true) {
@@ -120,30 +128,6 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
           </Marker>
         ))}
 
-        {selected && (
-          <Popup
-            latitude={selected.lat}
-            longitude={selected.lng}
-            anchor="bottom"
-            offset={14}
-            closeButton={false}
-            onClose={() => setSelectedId(undefined)}
-            maxWidth="240px"
-          >
-            <div className="w-52">
-              <CardFront card={selected} className="aspect-[3/2] w-full rounded-sm" />
-              <p className="mt-2 truncate font-hand text-lg leading-tight">
-                {selected.title ?? selected.quickNote ?? "Untitled"}
-              </p>
-              <div className="flex items-baseline justify-between text-xs text-stone-500">
-                <span>{formatDate(selected.capturedAt)}</span>
-                <Link href={`/cards/${selected.id}/edit`} className="underline">
-                  Edit
-                </Link>
-              </div>
-            </div>
-          </Popup>
-        )}
       </Map>
 
       <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
@@ -207,6 +191,10 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
             </>
           )}
         </div>
+      )}
+
+      {selected && !arranging && (
+        <PostcardModal card={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
       )}
 
       {error && (

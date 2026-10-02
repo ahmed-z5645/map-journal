@@ -40,7 +40,7 @@ export async function deleteObjects(keys: string[]) {
   );
 }
 
-/** Short-lived URL for a private object. Only call this for an authenticated request. */
-export function presignedGetUrl(key: string, expiresIn = 60 * 60) {
+/** Time-limited URL for a private object (long enough for a tab left open). Only call this for an authenticated request. */
+export function presignedGetUrl(key: string, expiresIn = 12 * 60 * 60) {
   return getSignedUrl(r2(), new GetObjectCommand({ Bucket: bucket(), Key: key }), { expiresIn });
 }

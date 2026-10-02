@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createDraft } from "./actions";
+import { formatDateTime } from "@/lib/dates";
 import { preparePhoto, type PhotoMeta } from "@/lib/prepare-photo";
 
 type DeviceLocation =
@@ -38,9 +39,6 @@ function useDeviceLocation() {
   useEffect(locate, []);
   return [loc, locate] as const;
 }
-
-const formatTime = (d: Date) =>
-  d.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
 
 export function CaptureForm() {
   const [device, relocate] = useDeviceLocation();
@@ -168,7 +166,7 @@ export function CaptureForm() {
           <dd>
             {photo?.meta.takenAt ? (
               <>
-                {formatTime(photo.meta.takenAt)} <span className="text-stone-400">(from photo)</span>
+                {formatDateTime(photo.meta.takenAt)} <span className="text-stone-400">(from photo)</span>
               </>
             ) : (
               "Now"
