@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
-import Map, { Marker, type MarkerDragEvent } from "react-map-gl/maplibre";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import Map, { Marker, type MapRef, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@/lib/maplibre-setup";
 import type { PostcardView } from "@/components/postcard";
+import { PersonFilter } from "@/components/person-filter";
 import { PostcardModal } from "@/components/postcard-modal";
 import { formatDate } from "@/lib/dates";
 import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
@@ -30,6 +31,27 @@ type Move = { id: string; from: { lat: number | null; lng: number | null } };
 
 const isLocated = (c: MapCard): c is Located => c.lat !== null && c.lng !== null;
 
+type Person = { id: string; name: string; count: number };
+
+/** Frames the given cards: one card gets a close zoom, several get fitted bounds. */
+function frameCards(map: MapRef, cards: Located[], animate: boolean) {
+  const duration = animate ? 800 : 0;
+  if (cards.length === 0) return;
+  if (cards.length === 1) {
+    map.flyTo({ center: [cards[0].lng, cards[0].lat], zoom: 14, duration });
+    return;
+  }
+  const lngs = cards.map((c) => c.lng);
+  const lats = cards.map((c) => c.lat);
+  map.fitBounds(
+    [
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)],
+    ],
+    { padding: 80, maxZoom: 15, duration },
+  );
+}
+
 
 function CardFront({ card, className }: { card: MapCard; className: string }) {
   return card.thumbUrl ? (
@@ -40,7 +62,20 @@ function CardFront({ card, className }: { card: MapCard; className: string }) {
   );
 }
 
-export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]; focusId?: string }) {
+export function PostcardMap({
+  cards: initialCards,
+  focusId,
+  people,
+  person,
+}: {
+  cards: MapCard[];
+  focusId?: string;
+  people: Person[];
+  person?: Person;
+}) {
+  const mapRef = useRef<MapRef>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const framedPerson = useRef<string | undefined>(undefined);
   const [cards, setCards] = useState(initialCards);
   const [arranging, setArranging] = useState(false);
   const [placingId, setPlacingId] = useState<string>();
@@ -52,13 +87,33 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
   // Server data wins whenever the page re-renders (e.g. after revalidation).
   useEffect(() => setCards(initialCards), [initialCards]);
 
+  // When the person filter changes, frame their cards (or everything, when cleared).
+  // On first load only frame if a filter is set and no single card was asked for.
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const firstRun = framedPerson.current === undefined;
+    const personId = person?.id ?? "";
+    if (!firstRun && framedPerson.current === personId) return;
+    framedPerson.current = personId;
+    if (firstRun && (!person || focusId)) return;
+    frameCards(
+      mapRef.current,
+      initialCards.filter(isLocated).filter((c) => c.status === "published"),
+      !firstRun,
+    );
+  }, [mapLoaded, person, focusId, initialCards]);
+
   const visible = cards.filter(isLocated).filter((c) => arranging || c.status === "published");
   const unplaced = cards.filter((c) => c.status === "draft" && !isLocated(c));
   const selected = visible.find((c) => c.id === selectedId);
   const closeModal = useCallback(() => {
     setSelectedId(undefined);
-    // Drop ?card= (set after publishing) so a refresh doesn't reopen it.
-    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
+    // Drop ?card= (set after publishing) so a refresh doesn't reopen it; keep ?person=.
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("card")) {
+      url.searchParams.delete("card");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
   }, []);
   const focus = cards.filter(isLocated).find((c) => c.id === focusId);
 
@@ -91,6 +146,8 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
   return (
     <div className="relative h-full w-full">
       <Map
+        ref={mapRef}
+        onLoad={() => setMapLoaded(true)}
         initialViewState={focus ? { latitude: focus.lat, longitude: focus.lng, zoom: 14 } : { ...TORONTO, zoom: 12 }}
         mapStyle={MAP_STYLE}
         style={{ width: "100%", height: "100%" }}
@@ -197,8 +254,10 @@ export function PostcardMap({ cards: initialCards, focusId }: { cards: MapCard[]
         <PostcardModal card={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
       )}
 
+      <PersonFilter people={people} selectedId={person?.id} className="absolute top-3 left-3 rounded-md bg-white/90 px-2 py-1 shadow" />
+
       {error && (
-        <p role="alert" className="absolute top-3 left-3 rounded-md bg-red-50 px-3 py-1.5 text-sm text-red-800 shadow">
+        <p role="alert" className="absolute top-14 left-1/2 -translate-x-1/2 rounded-md bg-red-50 px-3 py-1.5 text-sm text-red-800 shadow">
           {error}
         </p>
       )}
