@@ -20,6 +20,7 @@ type Seed = {
   lng: number | null;
   place?: string;
   photo?: string; // picsum seed; a photo makes it a polaroid, otherwise it's a note
+  shape?: "landscape" | "portrait" | "square" | "wide"; // photo shape, default landscape
   title?: string; // polaroids only
   body?: string;
   note?: string; // quick note from capture (drafts)
@@ -32,23 +33,23 @@ const ENTRIES: Seed[] = [
     body: "Riverdale hill at sunset. The skyline went pink, then orange, then gone. Cider that was mostly cinnamon." },
   { when: "2025-12-06T19:30", lat: 43.6503, lng: -79.3596, place: "Distillery District", photo: "distillery-lights", title: "xmas market", people: ["Aisha", "Jo"],
     body: "Too crowded to move, mulled wine in paper cups, Jo bought a wreath and carried it on the streetcar." },
-  { when: "2025-12-20T20:00", lat: 43.6525, lng: -79.3835, place: "Nathan Phillips Square", photo: "skating-rink", title: "first skate ❄", people: ["Priya", "Dev"],
+  { when: "2025-12-20T20:00", lat: 43.6525, lng: -79.3835, place: "Nathan Phillips Square", photo: "skating-rink", shape: "portrait", title: "first skate ❄", people: ["Priya", "Dev"],
     body: "Dev fell exactly once, very dramatically. Priya skated backwards the whole time just to prove she could." },
-  { when: "2026-01-24T14:15", lat: 43.6536, lng: -79.3925, place: "Art Gallery of Ontario", photo: "ago-gallery", people: ["Dev"],
+  { when: "2026-01-24T14:15", lat: 43.6536, lng: -79.3925, place: "Art Gallery of Ontario", photo: "ago-gallery", shape: "portrait", people: ["Dev"],
     body: "Stood in the Infinity Mirror room for longer than the allowed minute." },
   { when: "2026-02-15T11:40", lat: 43.6618, lng: -79.3741, place: "Allan Gardens",
     body: "Minus fifteen outside, thirty degrees in the palm house. Glasses fogged instantly. Stayed an hour just to be warm.\n\nCome back in March for the spring flower show." },
-  { when: "2026-03-29T16:20", lat: 43.6297, lng: -79.4706, place: "Humber Bay Arch Bridge", photo: "humber-bridge", people: ["Dev"],
+  { when: "2026-03-29T16:20", lat: 43.6297, lng: -79.4706, place: "Humber Bay Arch Bridge", photo: "humber-bridge", shape: "wide", people: ["Dev"],
     body: "First bike ride of the year. Legs did not remember how. Ice still on the edges of the lake." },
-  { when: "2026-04-25T10:30", lat: 43.6465, lng: -79.4637, place: "High Park", photo: "cherry-blossom", title: "sakura!!", people: ["Priya"],
+  { when: "2026-04-25T10:30", lat: 43.6465, lng: -79.4637, place: "High Park", photo: "cherry-blossom", shape: "portrait", title: "sakura!!", people: ["Priya"],
     body: "Packed, but worth it. Every second person had a tripod. Got there at 7:30 and it was already a festival." },
   { when: "2026-05-17T11:00", lat: 43.6624, lng: -79.3366, place: "Leslieville",
     body: "Ninety minute wait for pancakes on Queen East. Would do it again.\n\nTry the place two doors down next time — no line." },
   { when: "2026-05-30T19:45", lat: 43.6555, lng: -79.4141, place: "Little Italy",
     body: "Patio season officially opens. Wore a jacket anyway." },
-  { when: "2026-06-13T09:50", lat: 43.6846, lng: -79.3653, place: "Evergreen Brick Works", photo: "farmers-market", people: ["Aisha"],
+  { when: "2026-06-13T09:50", lat: 43.6846, lng: -79.3653, place: "Evergreen Brick Works", photo: "farmers-market", shape: "square", people: ["Aisha"],
     body: "Strawberries, sourdough, and a very good dog in a wagon. Walked the ravine trail back after." },
-  { when: "2026-07-04T15:30", lat: 43.7059, lng: -79.2318, place: "Scarborough Bluffs", photo: "bluffs-lake", title: "the bluffs", people: ["Mateo", "Sam"],
+  { when: "2026-07-04T15:30", lat: 43.7059, lng: -79.2318, place: "Scarborough Bluffs", photo: "bluffs-lake", shape: "wide", title: "the bluffs", people: ["Mateo", "Sam"],
     body: "The cliffs are so much bigger in person. Lake was freezing; Mateo went in anyway." },
   { when: "2026-07-19T13:05", lat: 43.6339, lng: -79.354, place: "Jack Layton Ferry Terminal",
     body: "Best view of the city is from the ferry back from Ward's. Every single time." },
@@ -56,21 +57,23 @@ const ENTRIES: Seed[] = [
     body: "Maple Leafs game from the hill. Nobody watches the baseball, everyone watches the dogs." },
   { when: "2026-08-08T20:30", lat: 43.678, lng: -79.3497, place: "The Danforth",
     body: "Taste of the Danforth. Souvlaki, loukoumades, a stranger's wedding dance. Shoes ruined. No regrets." },
-  { when: "2026-08-22T12:30", lat: 43.6545, lng: -79.4005, place: "Kensington Market", photo: "kensington-street", title: "pedestrian sunday", people: ["Jo"],
+  { when: "2026-08-22T12:30", lat: 43.6545, lng: -79.4005, place: "Kensington Market", photo: "kensington-street", shape: "portrait", title: "pedestrian sunday", people: ["Jo"],
     body: "Far too many dumplings and a plant I don't have room for. A guy was playing the saw." },
-  { when: "2026-09-06T08:40", lat: 43.6243, lng: -79.3378, place: "Tommy Thompson Park", photo: "spit-birds", people: ["Mateo"],
+  { when: "2026-09-06T08:40", lat: 43.6243, lng: -79.3378, place: "Tommy Thompson Park", photo: "spit-birds", shape: "square", people: ["Mateo"],
     body: "The Spit at dawn. Herons, cormorants, and the whole skyline looking small for once." },
   { when: "2026-09-20T20:30", lat: 43.6469, lng: -79.417, place: "Trinity Bellwoods", photo: "golden-park", title: "golden hour", people: ["Sam", "Priya"],
     body: "Long walk, cold brew, the dog park at dusk. Summer's last real weekend." },
 
   // Drafts: quick captures waiting to be written up.
-  { draft: true, when: "2026-09-27T23:10", lat: 43.6558, lng: -79.4106, photo: "rooftop-night", note: "rooftop at bar raval?? write this up" },
+  { draft: true, when: "2026-09-27T23:10", lat: 43.6558, lng: -79.4106, photo: "rooftop-night", shape: "portrait", note: "rooftop at bar raval?? write this up" },
   { draft: true, when: "2026-09-30T19:25", lat: 43.6487, lng: -79.4205, note: "Ossington — amazing taco place, find the name" },
   { draft: true, when: "2026-09-14T15:00", lat: null, lng: null, photo: "camera-roll", note: "from the camera roll — where was this?" },
 ];
 
-async function fetchPhoto(seed: string) {
-  const [w, h] = [1600, 1200];
+const SIZES = { landscape: [1600, 1200], portrait: [1200, 1600], square: [1400, 1400], wide: [1800, 1013] } as const;
+
+async function fetchPhoto(seed: string, shape: keyof typeof SIZES = "landscape") {
+  const [w, h] = SIZES[shape];
   try {
     const res = await fetch(`https://picsum.photos/seed/${seed}/${w}/${h}`);
     if (!res.ok) throw new Error(String(res.status));
@@ -95,7 +98,7 @@ const personIds = new Map(
 for (const e of ENTRIES) {
   const id = randomUUID();
   const kind = e.photo ? "polaroid" : "note";
-  const photo = e.photo ? await processAndStorePhoto(id, await fetchPhoto(e.photo)) : {};
+  const photo = e.photo ? await processAndStorePhoto(id, await fetchPhoto(e.photo, e.shape)) : {};
   const capturedAt = new Date(fromTorontoInput(e.when));
   await db.insert(postcards).values({
     id,

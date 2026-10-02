@@ -11,6 +11,8 @@ export async function toEntryViews(rows: Postcard[]): Promise<EntryView[]> {
     rows.map(async (r) => ({
       kind: r.kind,
       photoUrl: r.photoFullKey ? await presignedGetUrl(r.photoFullKey) : null,
+      photoWidth: r.photoWidth,
+      photoHeight: r.photoHeight,
       title: r.title,
       body: r.body,
       people: people.get(r.id) ?? [],

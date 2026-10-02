@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import { Entry, type EntryKind } from "@/components/entry";
+import { Entry, entryAspect, type EntryKind } from "@/components/entry";
 import { fromTorontoInput, toTorontoInput } from "@/lib/dates";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { cropPhoto, deleteDraft, replacePhoto, saveCard } from "./actions";
@@ -24,9 +24,11 @@ export type EditableEntry = {
   people: string[];
   photoUrl: string | null;
   originalUrl: string | null;
+  photoWidth: number | null;
+  photoHeight: number | null;
 };
 
-type PhotoResult = { photoUrl: string; originalUrl: string };
+type PhotoResult = { photoUrl: string; originalUrl: string; photoWidth: number; photoHeight: number };
 
 const label = "mb-1 block text-sm font-medium text-stone-600";
 const field = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 outline-none focus:border-stone-500";
@@ -47,7 +49,9 @@ export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeop
   const [capturedAt, setCapturedAt] = useState(toTorontoInput(entry.capturedAt));
   const [people, setPeople] = useState(entry.people);
   const [photo, setPhoto] = useState(
-    entry.photoUrl && entry.originalUrl ? { url: entry.photoUrl, originalUrl: entry.originalUrl } : null,
+    entry.photoUrl && entry.originalUrl
+      ? { url: entry.photoUrl, originalUrl: entry.originalUrl, width: entry.photoWidth, height: entry.photoHeight }
+      : null,
   );
   const [flipped, setFlipped] = useState(false);
   const [cropping, setCropping] = useState(false);
@@ -59,6 +63,8 @@ export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeop
   const preview = {
     kind: entry.kind,
     photoUrl: photo?.url ?? null,
+    photoWidth: photo?.width ?? null,
+    photoHeight: photo?.height ?? null,
     title: isPolaroid ? title.trim() || null : null,
     body: body.trim() || null,
     people: isPolaroid ? people : [],
@@ -77,7 +83,7 @@ export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeop
   }
 
   function applyPhoto(res: PhotoResult) {
-    setPhoto({ url: res.photoUrl, originalUrl: res.originalUrl });
+    setPhoto({ url: res.photoUrl, originalUrl: res.originalUrl, width: res.photoWidth, height: res.photoHeight });
   }
 
   function save(publish: boolean) {
@@ -128,7 +134,7 @@ export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeop
           entry={preview}
           flipped={flipped}
           onFlip={() => setFlipped((f) => !f)}
-          className="mx-auto w-full max-w-sm"
+          className={`mx-auto w-full ${entryAspect(preview) > 1.05 ? "max-w-lg" : "max-w-sm"}`}
         />
         {isPolaroid && <p className="mt-3 text-center text-sm text-stone-500">Tap the polaroid to turn it over.</p>}
       </div>

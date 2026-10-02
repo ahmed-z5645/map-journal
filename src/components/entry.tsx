@@ -8,6 +8,8 @@ export type EntryKind = "polaroid" | "note";
 export type EntryView = {
   kind: EntryKind;
   photoUrl: string | null; // polaroids only
+  photoWidth: number | null;
+  photoHeight: number | null;
   title: string | null; // polaroids only, written under the photo
   body: string | null;
   people: string[];
@@ -15,8 +17,22 @@ export type EntryView = {
   capturedAt: string; // ISO
 };
 
-/** Width / height of each kind, for sizing containers. */
-export const ENTRY_ASPECT: Record<EntryKind, number> = { polaroid: 88 / 107, note: 3 / 4 };
+// Polaroid frame, as fractions of the card's width: even border on top and sides, a deeper strip below.
+const FRAME_BORDER = 0.055;
+const FRAME_STRIP = 0.17;
+const PHOTO_WIDTH = 1 - 2 * FRAME_BORDER;
+
+/** The photo's shape (width / height); extreme panoramas are trimmed to keep the card sensible. */
+function photoAspect(e: Pick<EntryView, "photoWidth" | "photoHeight">) {
+  if (!e.photoWidth || !e.photoHeight) return 1;
+  return Math.min(2.4, Math.max(0.5, e.photoWidth / e.photoHeight));
+}
+
+/** Width / height of the whole entry: a polaroid's frame grows around its photo; notes are 3:4 pages. */
+export function entryAspect(e: Pick<EntryView, "kind" | "photoWidth" | "photoHeight">) {
+  if (e.kind === "note") return 3 / 4;
+  return 1 / (FRAME_BORDER + PHOTO_WIDTH / photoAspect(e) + FRAME_STRIP);
+}
 
 /** Small seeded PRNG so each note's torn edge is unique but stable across renders. */
 function seeded(seed: string) {
@@ -35,7 +51,7 @@ function tornTopEdge(seed: string) {
   return `polygon(${points.join(", ")})`;
 }
 
-/** A polaroid: square photo, handwritten title on the strip below; click to turn it over. */
+/** A polaroid: the photo in its own shape, handwritten title on the strip below; click to turn it over. */
 export function Polaroid({
   entry,
   flipped: controlled,
@@ -57,13 +73,17 @@ export function Polaroid({
       type="button"
       onClick={() => (onFlip ? onFlip() : setOwn((f) => !f))}
       aria-label={flipped ? "Show front of polaroid" : "Show back of polaroid"}
-      className={`@container block aspect-[88/107] perspective-[1600px] ${className}`}
-      style={style}
+      className={`@container block perspective-[1600px] ${className}`}
+      // Size containment lets the back scale its text by the card's shorter side (cqmin).
+      style={{ aspectRatio: entryAspect(entry), containerType: "size", ...style }}
     >
       <div className={`relative h-full w-full transition-transform duration-700 transform-3d ${flipped ? "rotate-y-180" : ""}`}>
         {/* Front */}
         <div className="absolute inset-0 flex flex-col rounded-[1cqw] bg-[#fbfaf6] px-[5.5cqw] pt-[5.5cqw] shadow-lg backface-hidden">
-          <div className="aspect-square w-full overflow-hidden bg-stone-800 shadow-[inset_0_0_2cqw_rgba(0,0,0,0.25)]">
+          <div
+            className="w-full overflow-hidden bg-stone-800 shadow-[inset_0_0_2cqw_rgba(0,0,0,0.25)]"
+            style={{ aspectRatio: photoAspect(entry) }}
+          >
             {entry.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- presigned R2 URL
               <img
@@ -77,17 +97,17 @@ export function Polaroid({
           </div>
           <div className="flex min-h-0 flex-1 items-center px-[1cqw]">
             {entry.title && (
-              <p className="line-clamp-2 font-hand text-[7.5cqw] leading-[1.05] text-stone-700">{entry.title}</p>
+              <p className="line-clamp-2 pr-[0.25em] pb-[0.1em] font-hand text-[7.5cqw] leading-[1.1] text-stone-700">{entry.title}</p>
             )}
           </div>
         </div>
 
         {/* Back */}
-        <div className="absolute inset-0 flex flex-col gap-[4cqw] rounded-[1cqw] bg-[#f4f2ec] p-[7cqw] text-left text-stone-700 shadow-lg backface-hidden rotate-y-180">
-          <div className="min-h-0 flex-1 overflow-y-auto font-hand text-[6.5cqw] leading-[1.3] whitespace-pre-wrap">
+        <div className="absolute inset-0 flex flex-col gap-[4cqmin] rounded-[1cqw] bg-[#f4f2ec] p-[7cqmin] text-left text-stone-700 shadow-lg backface-hidden rotate-y-180">
+          <div className="min-h-0 flex-1 overflow-y-auto font-hand text-[6.5cqmin] leading-[1.3] whitespace-pre-wrap">
             {entry.body || <span className="text-stone-300">Nothing written yet…</span>}
           </div>
-          <div className="space-y-[1cqw] border-t border-stone-300 pt-[3cqw] text-[max(11px,3.6cqw)]">
+          <div className="space-y-[1cqmin] border-t border-stone-300 pt-[3cqmin] text-[max(11px,3.6cqmin)]">
             {entry.people.length > 0 && <p>with {entry.people.join(", ")}</p>}
             {entry.placeLabel && <p>{entry.placeLabel}</p>}
             <p className="text-stone-500">{formatLongDate(entry.capturedAt)}</p>

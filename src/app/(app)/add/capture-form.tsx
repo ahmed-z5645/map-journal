@@ -101,10 +101,10 @@ export function CaptureForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <label className={`relative flex ${photo ? "aspect-square" : "aspect-[3/2]"} cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-stone-300 bg-white text-stone-500`}>
+      <label className={`relative flex ${photo ? "" : "aspect-[3/2]"} cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-stone-300 bg-white text-stone-500`}>
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-          <img src={photo.previewUrl} alt="Selected photo" className="h-full w-full object-cover" />
+          <img src={photo.previewUrl} alt="Selected photo" className="h-auto max-h-[60vh] w-full object-contain" />
         ) : (
           <span>{preparing ? "Preparing photo…" : "Tap to add a photo for a polaroid"}</span>
         )}

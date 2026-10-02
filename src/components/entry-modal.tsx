@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Entry, type EntryView } from "./entry";
+import { Entry, entryAspect, type EntryView } from "./entry";
 
 /** Full-size entry over a dimmed backdrop. Esc or a backdrop click closes it. */
 export function EntryModal({
@@ -23,8 +23,9 @@ export function EntryModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Both kinds are portrait, so fit by height (~75vh) and cap by width on phones.
-  const width = entry.kind === "polaroid" ? "min(88vw, 62vh, 520px)" : "min(88vw, 56vh, 480px)";
+  // Fit the card's height to ~76vh (its width follows its shape), capped by the viewport and a max size.
+  const aspect = entryAspect(entry);
+  const width = `min(92vw, ${(76 * aspect).toFixed(2)}vh, ${Math.round(aspect >= 1 ? 820 : 520)}px)`;
 
   return (
     <div

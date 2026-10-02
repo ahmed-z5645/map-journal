@@ -7,26 +7,21 @@ const THUMB_MAX = 400;
 /** Crop as fractions (0–1) of the original's width/height, so it's resolution-independent. */
 export type Crop = { x: number; y: number; width: number; height: number };
 
-/** The largest centred square — a polaroid's default framing. */
-function centreSquare(width: number, height: number): Crop {
-  const side = Math.min(width, height);
-  return { x: (width - side) / 2 / width, y: (height - side) / 2 / height, width: side / width, height: side / height };
-}
-
-/** Writes full + thumb WebP versions of `original`, cropped (centre square by default). sharp drops EXIF by default. */
-async function storeDerived(postcardId: string, original: Buffer, requested?: Crop) {
+/** Writes full + thumb WebP versions of `original` — the whole photo, or `crop` of it. sharp drops EXIF by default. */
+async function storeDerived(postcardId: string, original: Buffer, crop?: Crop) {
   const keys = photoKeys(postcardId);
-  const source = sharp(original);
-  const { width = 0, height = 0 } = await source.metadata();
-  const crop = requested ?? centreSquare(width, height);
-  const left = Math.round(crop.x * width);
-  const top = Math.round(crop.y * height);
-  const base = source.extract({
-    left,
-    top,
-    width: Math.max(1, Math.min(width - left, Math.round(crop.width * width))),
-    height: Math.max(1, Math.min(height - top, Math.round(crop.height * height))),
-  });
+  let base = sharp(original);
+  if (crop) {
+    const { width = 0, height = 0 } = await base.metadata();
+    const left = Math.round(crop.x * width);
+    const top = Math.round(crop.y * height);
+    base = base.extract({
+      left,
+      top,
+      width: Math.max(1, Math.min(width - left, Math.round(crop.width * width))),
+      height: Math.max(1, Math.min(height - top, Math.round(crop.height * height))),
+    });
+  }
 
   const [full, thumb] = await Promise.all([
     base
@@ -63,7 +58,7 @@ export async function processAndStorePhoto(postcardId: string, input: Buffer) {
   return { photoOriginalKey: keys.original, ...(await storeDerived(postcardId, original)) };
 }
 
-/** Re-derives full + thumb from the stored original with a new crop. */
-export async function recropPhoto(postcardId: string, originalKey: string, crop: Crop) {
-  return storeDerived(postcardId, await getObjectBuffer(originalKey), crop);
+/** Re-derives full + thumb from the stored original with a new crop, or the whole photo when `crop` is null. */
+export async function recropPhoto(postcardId: string, originalKey: string, crop: Crop | null) {
+  return storeDerived(postcardId, await getObjectBuffer(originalKey), crop ?? undefined);
 }

@@ -35,6 +35,8 @@ export default async function EditCardPage({ params }: { params: Promise<{ id: s
         people: card.people.map((p) => p.name),
         photoUrl,
         originalUrl,
+        photoWidth: card.photoWidth,
+        photoHeight: card.photoHeight,
       }}
     />
   );

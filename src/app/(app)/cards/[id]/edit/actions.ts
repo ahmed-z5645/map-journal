@@ -167,8 +167,10 @@ const cropInput = z
     width: z.number().gt(0).max(1),
     height: z.number().gt(0).max(1),
   })
-  .refine((c) => c.x + c.width <= 1.001 && c.y + c.height <= 1.001, "crop must stay inside the photo");
+  .refine((c) => c.x + c.width <= 1.001 && c.y + c.height <= 1.001, "crop must stay inside the photo")
+  .nullable();
 
+/** Crops the polaroid's photo from its stored original; `null` goes back to the whole photo. */
 export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Promise<PhotoResult> {
   if (!isId(id)) return MISSING;
   const parsed = cropInput.safeParse(crop);
