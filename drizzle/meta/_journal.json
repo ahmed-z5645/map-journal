@@ -8,6 +8,20 @@
       "when": 1790651107357,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790915555202,
+      "tag": "0001_polaroids_and_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790915555518,
+      "tag": "0002_drop_front_color",
+      "breakpoints": true
     }
   ]
 }

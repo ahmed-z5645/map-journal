@@ -101,12 +101,12 @@ export function CaptureForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <label className="relative flex aspect-[3/2] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-stone-300 bg-white text-stone-500">
+      <label className={`relative flex ${photo ? "aspect-square" : "aspect-[3/2]"} cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-stone-300 bg-white text-stone-500`}>
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element -- local blob preview
           <img src={photo.previewUrl} alt="Selected photo" className="h-full w-full object-cover" />
         ) : (
-          <span>{preparing ? "Preparing photo…" : "Tap to add a photo"}</span>
+          <span>{preparing ? "Preparing photo…" : "Tap to add a photo for a polaroid"}</span>
         )}
         <input
           ref={fileInput}
@@ -134,7 +134,7 @@ export function CaptureForm() {
         onChange={(e) => setNote(e.target.value)}
         maxLength={500}
         rows={3}
-        placeholder="A quick note (optional)"
+        placeholder={photo ? "A quick note for later (optional)" : "…or just write a note"}
         className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-base outline-none focus:border-stone-500"
       />
 
@@ -181,7 +181,7 @@ export function CaptureForm() {
         disabled={!canSubmit}
         className="rounded-lg bg-stone-800 px-4 py-3 text-lg text-stone-50 disabled:opacity-50"
       >
-        {saving ? "Saving…" : "Save draft"}
+        {saving ? "Saving…" : photo ? "Save polaroid" : "Save note"}
       </button>
 
       {message && (

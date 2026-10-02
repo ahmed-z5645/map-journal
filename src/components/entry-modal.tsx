@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { isPortrait, Postcard, type PostcardView } from "./postcard";
+import { Entry, type EntryView } from "./entry";
 
-/** Full-size postcard over a dimmed backdrop. Esc or a backdrop click closes it. */
-export function PostcardModal({
-  card,
+/** Full-size entry over a dimmed backdrop. Esc or a backdrop click closes it. */
+export function EntryModal({
+  entry,
   editHref,
   onClose,
 }: {
-  card: PostcardView;
+  entry: EntryView;
   editHref?: string;
   onClose: () => void;
 }) {
@@ -23,20 +23,20 @@ export function PostcardModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Fit the card to the viewport: width-limited for landscape, height-limited for portrait.
-  const width = isPortrait(card) ? "min(85vw, 52vh)" : "min(92vw, 900px, 115vh)";
+  // Both kinds are portrait, so fit by height (~75vh) and cap by width on phones.
+  const width = entry.kind === "polaroid" ? "min(88vw, 62vh, 520px)" : "min(88vw, 56vh, 480px)";
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Postcard"
+      aria-label={entry.kind === "polaroid" ? "Polaroid" : "Note"}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-stone-900/70 p-4 backdrop-blur-sm"
     >
-      <Postcard card={card} className="shrink-0" style={{ width }} />
+      <Entry entry={entry} className="shrink-0" style={{ width }} />
       <div className="flex items-center gap-4 text-sm text-stone-100">
-        <span className="text-stone-300">Tap the card to turn it over</span>
+        {entry.kind === "polaroid" && <span className="text-stone-300">Tap the photo to turn it over</span>}
         {editHref && (
           <Link href={editHref} className="underline">
             Edit

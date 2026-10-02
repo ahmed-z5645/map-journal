@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Map, { Marker, type MapRef, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@/lib/maplibre-setup";
-import type { PostcardView } from "@/components/postcard";
+import type { EntryKind, EntryView } from "@/components/entry";
+import { EntryModal } from "@/components/entry-modal";
+import { EntryPin, EntryThumb } from "@/components/entry-thumb";
 import { PersonFilter } from "@/components/person-filter";
-import { PostcardModal } from "@/components/postcard-modal";
 import { formatDate } from "@/lib/dates";
-import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
 import { MAP_STYLE, TORONTO } from "@/lib/map";
 import { moveCard } from "./map-actions";
 
@@ -16,14 +16,14 @@ import { moveCard } from "./map-actions";
 export type MapCard = {
   id: string;
   status: "draft" | "published";
+  kind: EntryKind;
   lat: number | null;
   lng: number | null;
-  frontColor: string | null;
   thumbUrl: string | null;
   title: string | null;
   quickNote: string | null;
   capturedAt: string;
-  view: PostcardView;
+  view: EntryView;
 };
 
 type Located = MapCard & { lat: number; lng: number };
@@ -52,17 +52,7 @@ function frameCards(map: MapRef, cards: Located[], animate: boolean) {
   );
 }
 
-
-function CardFront({ card, className }: { card: MapCard; className: string }) {
-  return card.thumbUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element -- presigned R2 URL
-    <img src={card.thumbUrl} alt={card.title ?? ""} className={`${className} object-cover`} />
-  ) : (
-    <div className={className} style={{ background: card.frontColor ?? DEFAULT_FRONT_COLOR }} />
-  );
-}
-
-export function PostcardMap({
+export function EntryMap({
   cards: initialCards,
   focusId,
   people,
@@ -175,13 +165,11 @@ export function PostcardMap({
             }}
           >
             <div
-              aria-label={card.title ?? "Postcard"}
-              className={[
-                "h-3.5 w-5 rounded-[2px] border-2 border-white bg-stone-700 shadow-md",
-                arranging ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-                card.status === "draft" ? "border-dashed opacity-60" : "",
-              ].join(" ")}
-            />
+              aria-label={card.title ?? (card.kind === "polaroid" ? "Polaroid" : "Note")}
+              className={arranging ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
+            >
+              <EntryPin kind={card.kind} draft={card.status === "draft"} />
+            </div>
           </Marker>
         ))}
 
@@ -213,7 +201,7 @@ export function PostcardMap({
         <div className="absolute bottom-3 left-3 right-3 max-w-sm rounded-lg bg-white/95 p-3 text-sm shadow-lg sm:right-auto">
           {placingId ? (
             <div className="flex items-center justify-between gap-2">
-              <span>Tap the map where this card belongs.</span>
+              <span>Tap the map where this belongs.</span>
               <button type="button" onClick={() => setPlacingId(undefined)} className="underline">
                 Cancel
               </button>
@@ -221,7 +209,7 @@ export function PostcardMap({
           ) : (
             <>
               <p className="text-stone-600">
-                Drag any card to move it. Faded cards are drafts.
+                Drag anything to move it. Faded ones are drafts.
               </p>
               {unplaced.length > 0 && (
                 <>
@@ -233,9 +221,9 @@ export function PostcardMap({
                           type="button"
                           onClick={() => setPlacingId(card.id)}
                           title={card.quickNote ?? formatDate(card.capturedAt)}
-                          className="block w-20 text-left"
+                          className="block w-14 text-left"
                         >
-                          <CardFront card={card} className="h-12 w-20 rounded-sm" />
+                          <EntryThumb kind={card.kind} thumbUrl={card.thumbUrl} className="h-14 w-14 rounded-sm" />
                           <span className="block truncate text-xs text-stone-500">
                             {card.quickNote ?? formatDate(card.capturedAt)}
                           </span>
@@ -251,7 +239,7 @@ export function PostcardMap({
       )}
 
       {selected && !arranging && (
-        <PostcardModal card={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
+        <EntryModal entry={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
       )}
 
       <PersonFilter people={people} selectedId={person?.id} className="absolute top-3 left-3 rounded-md bg-white/90 px-2 py-1 shadow" />

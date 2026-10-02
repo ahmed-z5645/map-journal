@@ -7,21 +7,26 @@ const THUMB_MAX = 400;
 /** Crop as fractions (0–1) of the original's width/height, so it's resolution-independent. */
 export type Crop = { x: number; y: number; width: number; height: number };
 
-/** Writes full + thumb WebP versions of `original` (optionally cropped). sharp drops EXIF by default. */
-async function storeDerived(postcardId: string, original: Buffer, crop?: Crop) {
+/** The largest centred square — a polaroid's default framing. */
+function centreSquare(width: number, height: number): Crop {
+  const side = Math.min(width, height);
+  return { x: (width - side) / 2 / width, y: (height - side) / 2 / height, width: side / width, height: side / height };
+}
+
+/** Writes full + thumb WebP versions of `original`, cropped (centre square by default). sharp drops EXIF by default. */
+async function storeDerived(postcardId: string, original: Buffer, requested?: Crop) {
   const keys = photoKeys(postcardId);
-  let base = sharp(original);
-  if (crop) {
-    const { width = 0, height = 0 } = await base.metadata();
-    const left = Math.round(crop.x * width);
-    const top = Math.round(crop.y * height);
-    base = base.extract({
-      left,
-      top,
-      width: Math.max(1, Math.min(width - left, Math.round(crop.width * width))),
-      height: Math.max(1, Math.min(height - top, Math.round(crop.height * height))),
-    });
-  }
+  const source = sharp(original);
+  const { width = 0, height = 0 } = await source.metadata();
+  const crop = requested ?? centreSquare(width, height);
+  const left = Math.round(crop.x * width);
+  const top = Math.round(crop.y * height);
+  const base = source.extract({
+    left,
+    top,
+    width: Math.max(1, Math.min(width - left, Math.round(crop.width * width))),
+    height: Math.max(1, Math.min(height - top, Math.round(crop.height * height))),
+  });
 
   const [full, thumb] = await Promise.all([
     base

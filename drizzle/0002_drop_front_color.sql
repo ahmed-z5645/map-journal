@@ -1,0 +1,1 @@
+ALTER TABLE "postcards" DROP COLUMN "front_color";

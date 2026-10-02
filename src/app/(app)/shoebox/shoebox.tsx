@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { isPortrait, Postcard, type PostcardView } from "@/components/postcard";
+import { Entry, type EntryView } from "@/components/entry";
 import { formatMonth } from "@/lib/dates";
 
-type Card = { id: string; view: PostcardView };
+type Card = { id: string; view: EntryView };
 
-/** A small, stable tilt per card (−1.5°…1.5°) so the stack feels hand-placed. */
-function tilt(id: string) {
+/** A small, stable tilt and sideways nudge per entry so the box feels hand-filled. */
+function scatter(id: string) {
   let h = 0;
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
-  return ((Math.abs(h) % 31) - 15) / 10;
+  const a = Math.abs(h);
+  return { rotate: `${((a % 51) - 25) / 10}deg`, translate: `${((a >> 6) % 41) - 20}px 0` };
 }
 
 /** Newest first, grouped under month headings. */
@@ -32,8 +33,8 @@ export function Shoebox({ cards }: { cards: Card[] }) {
           <ul className="flex flex-col gap-10">
             {month.cards.map(({ id, view }) => (
               <li key={id} className="flex flex-col items-center gap-2">
-                <div className={`w-full ${isPortrait(view) ? "max-w-xs" : ""}`} style={{ rotate: `${tilt(id)}deg` }}>
-                  <Postcard card={view} className="w-full" />
+                <div className="w-full max-w-xs" style={scatter(id)}>
+                  <Entry entry={view} className="w-full" />
                 </div>
                 <Link href={`/cards/${id}/edit`} className="text-xs text-stone-400 underline hover:text-stone-700">
                   Edit

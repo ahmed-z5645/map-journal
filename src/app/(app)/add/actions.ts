@@ -49,7 +49,10 @@ export async function createDraft(formData: FormData): Promise<CreateDraftResult
       .values({
         id,
         status: "draft",
+        // A photo makes a polaroid; text alone is a note, and that text is the note itself.
+        kind: hasPhoto ? "polaroid" : "note",
         quickNote: note,
+        body: hasPhoto ? undefined : note,
         lat: hasLocation ? lat : undefined,
         lng: hasLocation ? lng : undefined,
         locationAccuracyM: hasLocation ? accuracy : undefined,

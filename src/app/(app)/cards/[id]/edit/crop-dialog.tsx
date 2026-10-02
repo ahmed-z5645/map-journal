@@ -6,28 +6,20 @@ import Cropper, { type Area } from "react-easy-crop";
 // react-easy-crop can report values a hair outside 0–100.
 const frac = (pct: number) => Math.min(1, Math.max(0, pct / 100));
 
-const ASPECTS = [
-  { label: "Landscape", value: 3 / 2 },
-  { label: "Portrait", value: 2 / 3 },
-];
-
-/** Crops the stored original; reports the area as 0–1 fractions. */
+/** Square crop of the stored original (a polaroid's photo); reports the area as 0–1 fractions. */
 export function CropDialog({
   imageUrl,
-  initialAspect,
   busy,
   onCancel,
   onApply,
 }: {
   imageUrl: string;
-  initialAspect: number;
   busy: boolean;
   onCancel: () => void;
   onApply: (crop: { x: number; y: number; width: number; height: number }) => void;
 }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [aspect, setAspect] = useState(initialAspect);
   const [area, setArea] = useState<Area>();
 
   return (
@@ -37,23 +29,13 @@ export function CropDialog({
           image={imageUrl}
           crop={crop}
           zoom={zoom}
-          aspect={aspect}
+          aspect={1}
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={(pct) => setArea(pct)}
         />
       </div>
       <div className="flex flex-wrap items-center gap-3 bg-stone-900 p-4 text-stone-100">
-        {ASPECTS.map((a) => (
-          <button
-            key={a.label}
-            type="button"
-            onClick={() => setAspect(a.value)}
-            className={`rounded-md px-3 py-1.5 text-sm ${aspect === a.value ? "bg-stone-100 text-stone-900" : "bg-stone-700"}`}
-          >
-            {a.label}
-          </button>
-        ))}
         <input
           type="range"
           min={1}

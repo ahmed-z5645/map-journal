@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EntryThumb } from "@/components/entry-thumb";
 import { listPostcards } from "@/db/queries";
 import { formatDateTime } from "@/lib/dates";
 import { presignedGetUrl } from "@/lib/r2";
@@ -17,22 +18,13 @@ export default async function DraftsPage() {
           {drafts.map((d, i) => (
             <li key={d.id}>
               <Link href={`/cards/${d.id}/edit`} className="flex gap-3 rounded-md bg-white p-3 shadow-sm hover:shadow-md">
-              <div
-                className="h-16 w-24 shrink-0 overflow-hidden rounded bg-stone-200"
-                style={!thumbs[i] && d.frontColor ? { background: d.frontColor } : undefined}
-              >
-                {thumbs[i] && (
-                  // eslint-disable-next-line @next/next/no-img-element -- presigned R2 URL
-                  <img src={thumbs[i]} alt="" className="h-full w-full object-cover" />
-                )}
-              </div>
-              <div className="min-w-0 text-sm">
-                <p className="truncate">{d.quickNote ?? <span className="text-stone-400">No note</span>}</p>
-                <p className="text-stone-500">
-                  {formatDateTime(d.capturedAt)}
-                </p>
-                {d.lat == null && <p className="text-amber-700">No location yet</p>}
-              </div>
+                <EntryThumb kind={d.kind} thumbUrl={thumbs[i]} className="h-16 w-16 shrink-0 rounded" />
+                <div className="min-w-0 text-sm">
+                  <p className="text-xs tracking-wide text-stone-400 uppercase">{d.kind}</p>
+                  <p className="truncate">{d.quickNote ?? <span className="text-stone-400">No note</span>}</p>
+                  <p className="text-stone-500">{formatDateTime(d.capturedAt)}</p>
+                  {d.lat == null && <p className="text-amber-700">No location yet</p>}
+                </div>
               </Link>
             </li>
           ))}

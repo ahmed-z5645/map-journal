@@ -2,52 +2,52 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import { isPortrait, Postcard } from "@/components/postcard";
+import { Entry, type EntryKind } from "@/components/entry";
 import { fromTorontoInput, toTorontoInput } from "@/lib/dates";
-import { DEFAULT_FRONT_COLOR } from "@/lib/postcard";
 import { preparePhoto } from "@/lib/prepare-photo";
-import { cropPhoto, deleteDraft, removePhoto, replacePhoto, saveCard } from "./actions";
+import { cropPhoto, deleteDraft, replacePhoto, saveCard } from "./actions";
 import { CropDialog } from "./crop-dialog";
 import { LocationPicker } from "./location-picker";
 import { PeopleInput } from "./people-input";
 
-export type EditableCard = {
+export type EditableEntry = {
   id: string;
+  kind: EntryKind;
   status: "draft" | "published";
   title: string | null;
   body: string | null;
   quickNote: string | null;
   placeLabel: string | null;
-  frontColor: string | null;
   lat: number | null;
   lng: number | null;
   capturedAt: string; // ISO
   people: string[];
   photoUrl: string | null;
   originalUrl: string | null;
-  photoWidth: number | null;
-  photoHeight: number | null;
 };
 
-const SWATCHES = ["#c8553d", "#2f6f8f", "#588157", "#e9c46a", "#6d597a", "#264653"];
+type PhotoResult = { photoUrl: string; originalUrl: string };
 
 const label = "mb-1 block text-sm font-medium text-stone-600";
 const field = "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 outline-none focus:border-stone-500";
+const smallButton = "rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm";
 
-export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople: string[] }) {
+export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeople: string[] }) {
   const router = useRouter();
-  const [title, setTitle] = useState(card.title ?? "");
-  // Seed the back with the quick note from capture, so it isn't lost.
-  const [body, setBody] = useState(card.body ?? card.quickNote ?? "");
-  const [placeLabel, setPlaceLabel] = useState(card.placeLabel ?? "");
-  const [frontColor, setFrontColor] = useState(card.frontColor ?? DEFAULT_FRONT_COLOR);
-  const [location, setLocation] = useState(card.lat !== null && card.lng !== null ? { lat: card.lat, lng: card.lng } : null);
-  const [capturedAt, setCapturedAt] = useState(toTorontoInput(card.capturedAt));
-  const [people, setPeople] = useState(card.people);
+  const isPolaroid = entry.kind === "polaroid";
+  const isDraft = entry.status === "draft";
+
+  const [title, setTitle] = useState(entry.title ?? "");
+  // Seed the writing with the quick note from capture, so it isn't lost.
+  const [body, setBody] = useState(entry.body ?? entry.quickNote ?? "");
+  const [placeLabel, setPlaceLabel] = useState(entry.placeLabel ?? "");
+  const [location, setLocation] = useState(
+    entry.lat !== null && entry.lng !== null ? { lat: entry.lat, lng: entry.lng } : null,
+  );
+  const [capturedAt, setCapturedAt] = useState(toTorontoInput(entry.capturedAt));
+  const [people, setPeople] = useState(entry.people);
   const [photo, setPhoto] = useState(
-    card.photoUrl
-      ? { url: card.photoUrl, originalUrl: card.originalUrl!, width: card.photoWidth, height: card.photoHeight }
-      : null,
+    entry.photoUrl && entry.originalUrl ? { url: entry.photoUrl, originalUrl: entry.originalUrl } : null,
   );
   const [flipped, setFlipped] = useState(false);
   const [cropping, setCropping] = useState(false);
@@ -55,19 +55,17 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
   const [pending, startTransition] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const isDraft = card.status === "draft";
-  const capturedIso = capturedAt ? fromTorontoInput(capturedAt) : card.capturedAt;
+  const capturedIso = capturedAt ? fromTorontoInput(capturedAt) : entry.capturedAt;
   const preview = {
+    kind: entry.kind,
     photoUrl: photo?.url ?? null,
-    photoWidth: photo?.width ?? null,
-    photoHeight: photo?.height ?? null,
-    frontColor,
-    title: title.trim() || null,
+    title: isPolaroid ? title.trim() || null : null,
     body: body.trim() || null,
-    people,
+    people: isPolaroid ? people : [],
     placeLabel: placeLabel.trim() || null,
     capturedAt: capturedIso,
   };
+  const canPublish = !!location && (isPolaroid || !!body.trim());
 
   function run(task: () => Promise<{ ok: true } | { ok: false; error: string }>, onOk: () => void) {
     setMessage(undefined);
@@ -78,22 +76,24 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
     });
   }
 
+  function applyPhoto(res: PhotoResult) {
+    setPhoto({ url: res.photoUrl, originalUrl: res.originalUrl });
+  }
+
   function save(publish: boolean) {
     const input = {
-      title,
+      title: isPolaroid ? title : null,
       body,
       placeLabel,
-      // A colour only matters without a photo, but keep the choice for if the photo is removed.
-      frontColor,
       lat: location?.lat ?? null,
       lng: location?.lng ?? null,
       capturedAt: capturedIso,
-      people,
+      people: isPolaroid ? people : [],
     };
     run(
-      () => saveCard(card.id, input, publish),
+      () => saveCard(entry.id, input, publish),
       () => {
-        if (publish) router.push(`/?card=${card.id}`);
+        if (publish) router.push(`/?card=${entry.id}`);
         else setMessage({ kind: "ok", text: "Saved." });
       },
     );
@@ -112,7 +112,7 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
     fd.set("photo", blob, "photo.jpg");
     run(
       async () => {
-        const res = await replacePhoto(card.id, fd);
+        const res = await replacePhoto(entry.id, fd);
         if (res.ok) applyPhoto(res);
         return res;
       },
@@ -120,139 +120,131 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
     );
   }
 
-  function applyPhoto(res: { photoUrl: string; originalUrl: string; photoWidth: number; photoHeight: number }) {
-    setPhoto({ url: res.photoUrl, originalUrl: res.originalUrl, width: res.photoWidth, height: res.photoHeight });
-  }
-
   return (
     <div className="mx-auto grid max-w-5xl gap-8 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       {/* Preview */}
       <div className="md:sticky md:top-4 md:self-start">
-        <Postcard
-          card={preview}
+        <Entry
+          entry={preview}
           flipped={flipped}
           onFlip={() => setFlipped((f) => !f)}
-          className={`mx-auto w-full ${isPortrait(preview) ? "max-w-xs" : ""}`}
+          className="mx-auto w-full max-w-sm"
         />
-        <p className="mt-3 text-center text-sm text-stone-500">Tap the card to turn it over.</p>
+        {isPolaroid && <p className="mt-3 text-center text-sm text-stone-500">Tap the polaroid to turn it over.</p>}
       </div>
 
       {/* Form */}
       <div className="flex flex-col gap-5">
-        <h1 className="font-hand text-3xl">{isDraft ? "Finish this postcard" : "Edit postcard"}</h1>
+        <h1 className="font-hand text-3xl">
+          {isDraft ? (isPolaroid ? "Finish this polaroid" : "Finish this note") : isPolaroid ? "Edit polaroid" : "Edit note"}
+        </h1>
 
-        <section>
-          <span className={label}>Front</span>
-          {photo ? (
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setCropping(true)} className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm">
-                Crop
-              </button>
-              <button type="button" onClick={() => fileInput.current?.click()} className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm">
-                Replace photo
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!confirm("Remove the photo? The front will become a solid colour.")) return;
-                  run(
-                    () => removePhoto(card.id),
-                    () => setPhoto(null),
-                  );
-                }}
-                className="rounded-md px-3 py-1.5 text-sm text-stone-500 underline"
-              >
-                Use a colour instead
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              {SWATCHES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setFrontColor(c)}
-                  aria-label={`Colour ${c}`}
-                  className={`h-8 w-8 rounded-full border-2 ${frontColor === c ? "border-stone-800" : "border-white"} shadow`}
-                  style={{ background: c }}
-                />
-              ))}
+        {isPolaroid && (
+          <>
+            <section>
+              <span className={label}>Photo</span>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setCropping(true)} disabled={!photo} className={smallButton}>
+                  Crop
+                </button>
+                <button type="button" onClick={() => fileInput.current?.click()} className={smallButton}>
+                  Replace photo
+                </button>
+              </div>
               <input
-                type="color"
-                value={frontColor}
-                onChange={(e) => setFrontColor(e.target.value)}
-                aria-label="Custom colour"
-                className="h-8 w-10 cursor-pointer rounded border border-stone-300"
+                ref={fileInput}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  void onPickPhoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
               />
-              <button type="button" onClick={() => fileInput.current?.click()} className="ml-auto rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm">
-                Add a photo
-              </button>
-            </div>
-          )}
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              void onPickPhoto(e.target.files?.[0]);
-              e.target.value = "";
-            }}
+            </section>
+
+            <label onFocus={() => setFlipped(false)}>
+              <span className={label}>
+                Title <span className="font-normal text-stone-400">(optional, written under the photo)</span>
+              </span>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} className={field} />
+            </label>
+          </>
+        )}
+
+        <label>
+          <span className={label}>{isPolaroid ? "On the back" : "Note"}</span>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            maxLength={5000}
+            rows={isPolaroid ? 6 : 10}
+            className={`${field} font-hand text-xl leading-snug`}
+            onFocus={() => setFlipped(true)}
           />
-        </section>
-
-        <label>
-          <span className={label}>
-            Title <span className="font-normal text-stone-400">{photo ? "(not shown — the photo is the title)" : "(shown on the back)"}</span>
-          </span>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={field} />
         </label>
 
-        <label>
-          <span className={label}>Back of the card</span>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} rows={7} className={`${field} font-hand text-xl leading-snug`} onFocus={() => setFlipped(true)} />
-        </label>
-
-        <div>
-          <span className={label}>People</span>
-          <PeopleInput value={people} onChange={setPeople} known={knownPeople} />
-        </div>
+        {isPolaroid && (
+          <div>
+            <span className={label}>People</span>
+            <PeopleInput value={people} onChange={setPeople} known={knownPeople} />
+          </div>
+        )}
 
         <div>
           <span className={label}>Where</span>
-          <LocationPicker value={location} onChange={setLocation} />
+          <LocationPicker kind={entry.kind} value={location} onChange={setLocation} />
           <div className="mt-2 flex gap-2">
-            <input value={placeLabel} onChange={(e) => setPlaceLabel(e.target.value)} maxLength={120} placeholder="Place name (optional), e.g. Trinity Bellwoods" className={field} />
+            <input
+              value={placeLabel}
+              onChange={(e) => setPlaceLabel(e.target.value)}
+              maxLength={120}
+              placeholder="Place name (optional), e.g. Trinity Bellwoods"
+              className={field}
+            />
             {location && isDraft && (
               <button type="button" onClick={() => setLocation(null)} className="shrink-0 text-sm text-stone-500 underline">
                 Clear pin
               </button>
             )}
           </div>
-          {!location && <p className="mt-1 text-sm text-amber-700">Tap the map to place this card.</p>}
+          {!location && <p className="mt-1 text-sm text-amber-700">Tap the map to place this {entry.kind}.</p>}
         </div>
 
         <label>
-          <span className={label}>When <span className="font-normal text-stone-400">(Toronto time)</span></span>
+          <span className={label}>
+            When <span className="font-normal text-stone-400">(Toronto time)</span>
+          </span>
           <input type="datetime-local" value={capturedAt} onChange={(e) => setCapturedAt(e.target.value)} className={field} />
         </label>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-5">
           {isDraft ? (
             <>
-              <button type="button" disabled={pending || !location} onClick={() => save(true)} className="rounded-lg bg-stone-800 px-4 py-2 text-stone-50 disabled:opacity-50" title={location ? undefined : "Place it on the map first"}>
+              <button
+                type="button"
+                disabled={pending || !canPublish}
+                onClick={() => save(true)}
+                className="rounded-lg bg-stone-800 px-4 py-2 text-stone-50 disabled:opacity-50"
+                title={canPublish ? undefined : location ? "Write something first" : "Place it on the map first"}
+              >
                 Publish to map
               </button>
-              <button type="button" disabled={pending} onClick={() => save(false)} className="rounded-lg border border-stone-300 bg-white px-4 py-2 disabled:opacity-50">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => save(false)}
+                className="rounded-lg border border-stone-300 bg-white px-4 py-2 disabled:opacity-50"
+              >
                 Save draft
               </button>
               <button
                 type="button"
                 disabled={pending}
                 onClick={() => {
-                  if (!confirm("Delete this draft and its photo? This can't be undone.")) return;
+                  if (!confirm(`Delete this draft${isPolaroid ? " and its photo" : ""}? This can't be undone.`)) return;
                   run(
-                    () => deleteDraft(card.id),
+                    () => deleteDraft(entry.id),
                     () => router.push("/drafts"),
                   );
                 }}
@@ -262,7 +254,12 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
               </button>
             </>
           ) : (
-            <button type="button" disabled={pending} onClick={() => save(false)} className="rounded-lg bg-stone-800 px-4 py-2 text-stone-50 disabled:opacity-50">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => save(false)}
+              className="rounded-lg bg-stone-800 px-4 py-2 text-stone-50 disabled:opacity-50"
+            >
               Save changes
             </button>
           )}
@@ -278,13 +275,12 @@ export function Editor({ card, knownPeople }: { card: EditableCard; knownPeople:
       {cropping && photo && (
         <CropDialog
           imageUrl={photo.originalUrl}
-          initialAspect={photo.width && photo.height && photo.height > photo.width ? 2 / 3 : 3 / 2}
           busy={pending}
           onCancel={() => setCropping(false)}
           onApply={(crop) =>
             run(
               async () => {
-                const res = await cropPhoto(card.id, crop);
+                const res = await cropPhoto(entry.id, crop);
                 if (res.ok) applyPhoto(res);
                 return res;
               },

@@ -1,0 +1,340 @@
+{
+  "id": "56224f9c-92bc-4317-b29b-8c04c06662f2",
+  "prevId": "6e3f5d23-89ca-4a95-a16b-53290242dcd4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.people": {
+      "name": "people",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "people_name_lower_idx": {
+          "name": "people_name_lower_idx",
+          "columns": [
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.postcard_people": {
+      "name": "postcard_people",
+      "schema": "",
+      "columns": {
+        "postcard_id": {
+          "name": "postcard_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "postcard_people_person_idx": {
+          "name": "postcard_people_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "postcard_people_postcard_id_postcards_id_fk": {
+          "name": "postcard_people_postcard_id_postcards_id_fk",
+          "tableFrom": "postcard_people",
+          "tableTo": "postcards",
+          "columnsFrom": [
+            "postcard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "postcard_people_person_id_people_id_fk": {
+          "name": "postcard_people_person_id_people_id_fk",
+          "tableFrom": "postcard_people",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "postcard_people_postcard_id_person_id_pk": {
+          "name": "postcard_people_postcard_id_person_id_pk",
+          "columns": [
+            "postcard_id",
+            "person_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.postcards": {
+      "name": "postcards",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "status": {
+          "name": "status",
+          "type": "postcard_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "entry_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "front_color": {
+          "name": "front_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_original_key": {
+          "name": "photo_original_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_full_key": {
+          "name": "photo_full_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_thumb_key": {
+          "name": "photo_thumb_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_width": {
+          "name": "photo_width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photo_height": {
+          "name": "photo_height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quick_note": {
+          "name": "quick_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lng": {
+          "name": "lng",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_accuracy_m": {
+          "name": "location_accuracy_m",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "place_label": {
+          "name": "place_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "captured_at": {
+          "name": "captured_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "postcards_status_captured_idx": {
+          "name": "postcards_status_captured_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "captured_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "published_has_location": {
+          "name": "published_has_location",
+          "value": "\"postcards\".\"status\" = 'draft' OR (\"postcards\".\"lat\" IS NOT NULL AND \"postcards\".\"lng\" IS NOT NULL AND \"postcards\".\"published_at\" IS NOT NULL)"
+        },
+        "polaroid_has_photo": {
+          "name": "polaroid_has_photo",
+          "value": "\"postcards\".\"kind\" <> 'polaroid' OR \"postcards\".\"photo_full_key\" IS NOT NULL"
+        },
+        "note_is_text_only": {
+          "name": "note_is_text_only",
+          "value": "\"postcards\".\"kind\" <> 'note' OR (\"postcards\".\"photo_original_key\" IS NULL AND \"postcards\".\"title\" IS NULL)"
+        },
+        "published_note_has_text": {
+          "name": "published_note_has_text",
+          "value": "\"postcards\".\"status\" = 'draft' OR \"postcards\".\"kind\" <> 'note' OR \"postcards\".\"body\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.entry_kind": {
+      "name": "entry_kind",
+      "schema": "public",
+      "values": [
+        "polaroid",
+        "note"
+      ]
+    },
+    "public.postcard_status": {
+      "name": "postcard_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "published"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

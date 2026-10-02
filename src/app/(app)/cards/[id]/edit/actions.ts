@@ -23,10 +23,6 @@ const cardInput = z
     title: optionalText(120),
     body: optionalText(5000),
     placeLabel: optionalText(120),
-    frontColor: z
-      .string()
-      .regex(/^#[0-9a-f]{6}$/i)
-      .nullable(),
     lat: z.number().min(-90).max(90).nullable(),
     lng: z.number().min(-180).max(180).nullable(),
     capturedAt: z.iso.datetime({ offset: true }),
@@ -38,7 +34,7 @@ export type CardInput = z.input<typeof cardInput>;
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
 const isId = (id: unknown): id is string => z.uuid().safeParse(id).success;
-const MISSING = { ok: false as const, error: "That postcard no longer exists." };
+const MISSING = { ok: false as const, error: "That entry no longer exists." };
 
 /** Case-insensitive dedupe that keeps the first spelling. */
 function uniqueNames(names: string[]) {
@@ -47,7 +43,10 @@ function uniqueNames(names: string[]) {
   return [...seen.values()];
 }
 
-/** Saves every editable field and the people tags; `publish` also moves a draft onto the map. */
+/**
+ * Saves every editable field and the people tags; `publish` also moves a draft onto the map.
+ * Notes are text only, so any title or people sent for a note are dropped.
+ */
 export async function saveCard(id: string, input: CardInput, publish: boolean): Promise<Result> {
   if (!isId(id)) return MISSING;
   const parsed = cardInput.safeParse(input);
@@ -61,24 +60,28 @@ export async function saveCard(id: string, input: CardInput, publish: boolean): 
   try {
     const outcome = await getDb().transaction(async (tx) => {
       const [existing] = await tx
-        .select({ status: postcards.status })
+        .select({ status: postcards.status, kind: postcards.kind })
         .from(postcards)
         .where(eq(postcards.id, id))
         .for("update");
       if (!existing) return "missing";
       if (existing.status === "published" && fields.lat === null) return "needs-location";
+      const isNote = existing.kind === "note";
+      const goingLive = publish || existing.status === "published";
+      if (isNote && goingLive && !fields.body) return "needs-text";
 
       await tx
         .update(postcards)
         .set({
           ...fields,
+          ...(isNote ? { title: null } : {}),
           capturedAt: new Date(capturedAt),
           ...(publish && existing.status === "draft" ? { status: "published", publishedAt: new Date() } : {}),
         })
         .where(eq(postcards.id, id));
 
       // People: create any new names (existing spelling wins), then replace this card's tags.
-      const wanted = uniqueNames(names);
+      const wanted = isNote ? [] : uniqueNames(names);
       await tx.delete(postcardPeople).where(eq(postcardPeople.postcardId, id));
       if (wanted.length > 0) {
         await tx
@@ -94,7 +97,8 @@ export async function saveCard(id: string, input: CardInput, publish: boolean): 
       return "saved";
     });
     if (outcome === "missing") return MISSING;
-    if (outcome === "needs-location") return { ok: false, error: "A published postcard needs a spot on the map." };
+    if (outcome === "needs-location") return { ok: false, error: "A published entry needs a spot on the map." };
+    if (outcome === "needs-text") return { ok: false, error: "Write something before publishing this note." };
   } catch (err) {
     console.error("saveCard failed", err);
     return { ok: false, error: "Couldn't save. Try again." };
@@ -134,6 +138,10 @@ export async function replacePhoto(id: string, formData: FormData): Promise<Phot
   if (!(photo instanceof File) || photo.size === 0) return { ok: false, error: "No photo received." };
   if (photo.size > MAX_PHOTO_BYTES) return { ok: false, error: "Photo is too large." };
 
+  const [entry] = await getDb().select({ kind: postcards.kind }).from(postcards).where(eq(postcards.id, id));
+  if (!entry) return MISSING;
+  if (entry.kind !== "polaroid") return { ok: false, error: "Notes don't have photos." };
+
   try {
     const stored = await processAndStorePhoto(id, Buffer.from(await photo.arrayBuffer()));
     const updated = await getDb()
@@ -170,7 +178,7 @@ export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Pr
     .select({ originalKey: postcards.photoOriginalKey })
     .from(postcards)
     .where(eq(postcards.id, id));
-  if (!card?.originalKey) return { ok: false, error: "This postcard has no photo to crop." };
+  if (!card?.originalKey) return { ok: false, error: "This entry has no photo to crop." };
 
   try {
     const derived = await recropPhoto(id, card.originalKey, parsed.data);
@@ -183,19 +191,4 @@ export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Pr
     console.error("cropPhoto failed", err);
     return { ok: false, error: "Couldn't crop the photo. Try again." };
   }
-}
-
-/** Switches the front back to a solid colour and deletes the stored photos. */
-export async function removePhoto(id: string): Promise<Result> {
-  if (!isId(id)) return MISSING;
-  const updated = await getDb()
-    .update(postcards)
-    .set({ photoOriginalKey: null, photoFullKey: null, photoThumbKey: null, photoWidth: null, photoHeight: null })
-    .where(eq(postcards.id, id))
-    .returning({ id: postcards.id });
-  if (updated.length === 0) return MISSING;
-  const k = photoKeys(id);
-  await deleteObjects([k.original, k.full, k.thumb]).catch((err) => console.error("removePhoto: R2 cleanup", err));
-  revalidatePath("/", "layout");
-  return { ok: true };
 }
