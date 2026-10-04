@@ -43,10 +43,10 @@ export function MapSticker({
         </div>
       ) : (
         <div
-          className="flex h-12 w-10 items-start overflow-hidden bg-[#fdfdf7] px-1 pt-2 shadow-[0_3px_6px_rgba(0,0,0,0.2)]"
+          className="creased relative flex h-12 w-10 items-start overflow-hidden bg-[#fdfdf7] px-1 pt-2 shadow-[0_3px_6px_rgba(0,0,0,0.2)]"
           style={{ backgroundImage: "repeating-linear-gradient(to bottom, transparent 0 7px, #bccde3 7px 8px)", backgroundPosition: "0 1px" }}
         >
-          {caption && <span className="line-clamp-4 font-hand text-[9px] leading-[8px] text-stone-700">{caption}</span>}
+          {caption && <span className="line-clamp-4 font-type text-[6.5px] leading-[8px] text-stone-700">{caption}</span>}
         </div>
       )}
       <div className={tape} style={{ rotate: `${-angle * 0.6}deg` }} />

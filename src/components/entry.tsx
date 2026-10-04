@@ -44,6 +44,12 @@ function seeded(seed: string) {
   };
 }
 
+/** Shifts the shared wrinkle texture so each note crumples differently. Stable per note. */
+function wrinkles(seed: string) {
+  const rand = seeded(seed + "wrinkles");
+  return { "--wrinkle-x": `${Math.round(rand() * 320)}px`, "--wrinkle-y": `${Math.round(rand() * 320)}px` } as React.CSSProperties;
+}
+
 function tornTopEdge(seed: string) {
   const rand = seeded(seed);
   const points = ["0% 100%", "100% 100%"];
@@ -104,7 +110,7 @@ export function Polaroid({
 
         {/* Back */}
         <div className="absolute inset-0 flex flex-col gap-[4cqmin] rounded-[1cqw] bg-[#f4f2ec] p-[7cqmin] text-left text-stone-700 shadow-lg backface-hidden rotate-y-180">
-          <div className="min-h-0 flex-1 overflow-y-auto font-hand text-[6.5cqmin] leading-[1.3] whitespace-pre-wrap">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin] font-hand text-[6.5cqmin] leading-[1.3] whitespace-pre-wrap">
             {entry.body || <span className="text-stone-300">Nothing written yet…</span>}
           </div>
           <div className="space-y-[1cqmin] border-t border-stone-300 pt-[3cqmin] font-type text-[max(11px,3.6cqmin)]">
@@ -127,9 +133,9 @@ export function NotePage({ entry, className = "", style }: { entry: EntryView; c
   return (
     // drop-shadow (not box-shadow) so the shadow follows the torn edge
     <div className={`@container aspect-[3/4] drop-shadow-[0_6px_10px_rgba(0,0,0,0.18)] ${className}`} style={style}>
-      <div className="relative h-full w-full bg-[#fdfdf7]" style={{ clipPath: tornTopEdge(entry.capturedAt) }}>
+      <div className="creased relative h-full w-full bg-[#fdfdf7]" style={{ clipPath: tornTopEdge(entry.capturedAt), ...wrinkles(entry.capturedAt) }}>
         <div
-          className="h-full overflow-y-auto pt-[11cqw] pr-[6cqw] pb-[14cqw] pl-[17cqw] text-left font-hand text-[6cqw] leading-[8cqw] whitespace-pre-wrap text-stone-800"
+          className="h-full overflow-y-auto overscroll-contain [scrollbar-width:thin] pt-[11cqw] pr-[6cqw] pb-[14cqw] pl-[17cqw] text-left font-type text-[3.8cqw] leading-[8cqw] whitespace-pre-wrap text-stone-800"
           style={{
             backgroundImage:
               "linear-gradient(to right, transparent 13cqw, #e7a3a3 13cqw, #e7a3a3 calc(13cqw + 1.5px), transparent calc(13cqw + 1.5px))," +
@@ -141,7 +147,7 @@ export function NotePage({ entry, className = "", style }: { entry: EntryView; c
         >
           {entry.body || <span className="text-stone-300">Nothing written yet…</span>}
         </div>
-        <p className="pointer-events-none absolute right-[6cqw] bottom-[4cqw] font-type text-[max(11px,3.6cqw)] text-stone-500">
+        <p className="pointer-events-none absolute right-[5cqw] bottom-[3cqw] bg-[#fdfdf7] px-[1.5cqw] py-[0.5cqw] font-type text-[max(11px,3.6cqw)] text-stone-500 shadow-[0_0_2cqw_1cqw_#fdfdf7]">
           {formatLongDate(entry.capturedAt)}
         </p>
       </div>

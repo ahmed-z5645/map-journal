@@ -46,15 +46,17 @@ export function EntryModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, onPrev, onNext]);
 
-  // Horizontal swipe steps through the set.
-  const swipeFrom = useRef<number>(undefined);
-  const onPointerDown = (e: React.PointerEvent) => (swipeFrom.current = e.clientX);
+  // A mostly-horizontal swipe steps through the set; vertical drags are left to scroll long notes.
+  const swipeFrom = useRef<{ x: number; y: number }>(undefined);
+  const onPointerDown = (e: React.PointerEvent) => (swipeFrom.current = { x: e.clientX, y: e.clientY });
   const onPointerUp = (e: React.PointerEvent) => {
-    if (swipeFrom.current === undefined) return;
-    const dx = e.clientX - swipeFrom.current;
+    if (!swipeFrom.current) return;
+    const dx = e.clientX - swipeFrom.current.x;
+    const dy = e.clientY - swipeFrom.current.y;
     swipeFrom.current = undefined;
-    if (dx < -50) onNext?.();
-    if (dx > 50) onPrev?.();
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) onNext?.();
+    else onPrev?.();
   };
 
   // Fit the card's height to ~72vh (its width follows its shape), capped by the viewport and a max size.

@@ -14,6 +14,14 @@ function tilt(id: string) {
   return `${((Math.abs(h) % 61) - 30) / 10}deg`;
 }
 
+/** Shifts the shared wrinkle texture so each note card crumples differently. */
+function wrinkles(id: string) {
+  let h = 0;
+  for (const ch of id) h = (h * 33 + ch.charCodeAt(0)) | 0;
+  const a = Math.abs(h);
+  return { "--wrinkle-x": `${a % 320}px`, "--wrinkle-y": `${(a >> 9) % 320}px` } as React.CSSProperties;
+}
+
 /** Polaroids pinned to a corkboard in a grid, under month tags; tap one to view full size and swipe through. */
 export function Scrapbook({ cards, canEdit }: { cards: Card[]; canEdit: boolean }) {
   const [openIndex, setOpenIndex] = useState<number>();
@@ -94,7 +102,7 @@ function Pin() {
   );
 }
 
-function TileFace({ card: { view, thumbUrl } }: { card: Card }) {
+function TileFace({ card: { id, view, thumbUrl } }: { card: Card }) {
   if (view.kind === "polaroid") {
     return (
       <span className={`${FRAME} flex flex-col bg-[#fbfaf6] px-[5.5cqw] pt-[5.5cqw]`}>
@@ -112,13 +120,14 @@ function TileFace({ card: { view, thumbUrl } }: { card: Card }) {
   }
   return (
     <span
-      className={`${FRAME} overflow-hidden bg-[#fdfdf7] px-[9cqw] pt-[11cqw] text-left`}
+      className={`${FRAME} creased relative overflow-hidden bg-[#fdfdf7] px-[9cqw] pt-[11cqw] text-left`}
       style={{
+        ...wrinkles(id),
         backgroundImage: "repeating-linear-gradient(to bottom, transparent 0 calc(12cqw - 1px), #c9d6e6 calc(12cqw - 1px) 12cqw)",
         backgroundPosition: "0 calc(11cqw + 1px)",
       }}
     >
-      <span className="line-clamp-6 font-hand text-[10cqw] leading-[12cqw] text-stone-700">{view.body}</span>
+      <span className="line-clamp-6 font-type text-[6.2cqw] leading-[12cqw] text-stone-700">{view.body}</span>
     </span>
   );
 }

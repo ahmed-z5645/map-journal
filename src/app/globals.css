@@ -45,3 +45,19 @@ body {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.75 0 0 0 4 -2.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23n%29'/%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.28 0 0 0 0 0.12 0 0 0 0.5 -0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23n%29'/%3E%3C/svg%3E");
 }
+
+/*
+ * Crumpled-paper wrinkles for notes: sharp-ridged noise lit from the side, multiplied faintly onto the
+ * paper. Needs a positioned parent; set --wrinkle-x / --wrinkle-y per note so each crumples differently.
+ */
+.creased::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='w' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.018 0.024' numOctaves='3' seed='11' stitchTiles='stitch' result='big'/%3E%3CfeTurbulence type='turbulence' baseFrequency='0.06' numOctaves='2' seed='4' stitchTiles='stitch' result='small'/%3E%3CfeComposite in='big' in2='small' operator='arithmetic' k2='0.75' k3='0.35'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2' diffuseConstant='1'%3E%3CfeDistantLight azimuth='235' elevation='62'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23w%29'/%3E%3C/svg%3E");
+  background-size: 320px 320px;
+  background-position: var(--wrinkle-x, 0) var(--wrinkle-y, 0);
+  mix-blend-mode: multiply;
+  opacity: 0.45;
+}
