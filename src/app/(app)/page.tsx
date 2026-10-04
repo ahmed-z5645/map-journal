@@ -2,12 +2,15 @@ import { listMapCards } from "@/db/queries";
 import { resolvePersonFilter } from "@/lib/person-filter";
 import { toEntryViews } from "@/lib/entry-views";
 import { presignedGetUrl } from "@/lib/r2";
+import { isAdmin } from "@/lib/session";
 import { EntryMap, type MapCard } from "./entry-map";
 
 export default async function MapPage({ searchParams }: { searchParams: Promise<{ card?: string; person?: string }> }) {
   const { card: focusId, person: personParam } = await searchParams;
-  const { people, person } = await resolvePersonFilter(personParam);
-  const rows = await listMapCards(person?.id);
+  const { person } = await resolvePersonFilter(personParam);
+  const admin = await isAdmin();
+  // Drafts never leave the server for visitors; the admin needs them to arrange.
+  const rows = await listMapCards(person?.id, { includeDrafts: admin });
   const views = await toEntryViews(rows);
   const cards: MapCard[] = await Promise.all(
     rows.map(async (r, i) => ({
@@ -23,5 +26,5 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
       view: views[i],
     })),
   );
-  return <EntryMap cards={cards} focusId={focusId} people={people} person={person} />;
+  return <EntryMap cards={cards} focusId={focusId} person={person} canEdit={admin} />;
 }

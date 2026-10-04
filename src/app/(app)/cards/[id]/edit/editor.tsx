@@ -127,7 +127,7 @@ export function Editor({ entry, knownPeople }: { entry: EditableEntry; knownPeop
   }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="mx-auto grid max-w-5xl gap-8 p-4 pb-28 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       {/* Preview */}
       <div className="md:sticky md:top-4 md:self-start">
         <Entry

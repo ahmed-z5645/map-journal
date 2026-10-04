@@ -6,6 +6,7 @@ import { getDb } from "@/db";
 import { postcards } from "@/db/schema";
 import { processAndStorePhoto } from "@/lib/images";
 import { deleteObjects } from "@/lib/r2";
+import { requireAdmin } from "@/lib/session";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
@@ -23,6 +24,7 @@ const draftInput = z.object({
 export type CreateDraftResult = { ok: true } | { ok: false; error: string };
 
 export async function createDraft(formData: FormData): Promise<CreateDraftResult> {
+  await requireAdmin();
   const parsed = draftInput.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: "Some of the details didn't look right." };
   const { note, lat, lng, accuracy, capturedAt } = parsed.data;

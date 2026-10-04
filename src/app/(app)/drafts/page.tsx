@@ -9,7 +9,7 @@ export default async function DraftsPage() {
   const thumbs = await Promise.all(drafts.map((d) => (d.photoThumbKey ? presignedGetUrl(d.photoThumbKey) : null)));
 
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl p-4 pb-28">
       <h1 className="mb-4 font-hand text-3xl">Drafts ({drafts.length})</h1>
       {drafts.length === 0 ? (
         <p className="text-stone-500">Nothing waiting to be written up.</p>

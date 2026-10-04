@@ -28,5 +28,5 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
 export async function logout() {
   (await cookies()).delete(SESSION_COOKIE);
-  redirect("/login");
+  redirect("/"); // the map is public, so land on the visitor view
 }

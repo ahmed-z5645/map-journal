@@ -15,7 +15,7 @@ function scatter(id: string) {
 }
 
 /** Newest first, grouped under month headings. */
-export function Shoebox({ cards }: { cards: Card[] }) {
+export function Shoebox({ cards, canEdit }: { cards: Card[]; canEdit: boolean }) {
   const months: { label: string; cards: Card[] }[] = [];
   for (const card of cards) {
     const label = formatMonth(card.view.capturedAt);
@@ -36,9 +36,11 @@ export function Shoebox({ cards }: { cards: Card[] }) {
                 <div className={`w-full ${entryAspect(view) > 1.05 ? "max-w-md" : "max-w-xs"}`} style={scatter(id)}>
                   <Entry entry={view} className="w-full" />
                 </div>
-                <Link href={`/cards/${id}/edit`} className="text-xs text-stone-400 underline hover:text-stone-700">
-                  Edit
-                </Link>
+                {canEdit && (
+                  <Link href={`/cards/${id}/edit`} className="text-xs text-stone-400 underline hover:text-stone-700">
+                    Edit
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

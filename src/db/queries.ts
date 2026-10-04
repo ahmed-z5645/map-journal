@@ -24,11 +24,11 @@ export function listPostcards(status: "draft" | "published", personId?: string) 
 }
 
 /** Everything the map needs: published cards plus drafts (shown only in Arrange mode). */
-export function listMapCards(personId?: string) {
+export function listMapCards(personId?: string, { includeDrafts = false } = {}) {
   return getDb()
     .select()
     .from(postcards)
-    .where(personId ? taggedWith(personId) : undefined)
+    .where(and(personId ? taggedWith(personId) : undefined, includeDrafts ? undefined : eq(postcards.status, "published")))
     .orderBy(desc(postcards.capturedAt));
 }
 

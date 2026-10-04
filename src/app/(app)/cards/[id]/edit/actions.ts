@@ -7,6 +7,7 @@ import { getDb } from "@/db";
 import { people, postcardPeople, postcards } from "@/db/schema";
 import { processAndStorePhoto, recropPhoto } from "@/lib/images";
 import { deleteObjects, photoKeys, presignedGetUrl } from "@/lib/r2";
+import { requireAdmin } from "@/lib/session";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
@@ -48,6 +49,7 @@ function uniqueNames(names: string[]) {
  * Notes are text only, so any title or people sent for a note are dropped.
  */
 export async function saveCard(id: string, input: CardInput, publish: boolean): Promise<Result> {
+  await requireAdmin();
   if (!isId(id)) return MISSING;
   const parsed = cardInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Some of the details didn't look right." };
@@ -110,6 +112,7 @@ export async function saveCard(id: string, input: CardInput, publish: boolean): 
 
 /** Permanently deletes a draft and its photos. Published cards can't be deleted here. */
 export async function deleteDraft(id: string): Promise<Result> {
+  await requireAdmin();
   if (!isId(id)) return MISSING;
   const [deleted] = await getDb()
     .delete(postcards)
@@ -133,6 +136,7 @@ async function photoResult(fullKey: string, originalKey: string, width: number, 
 }
 
 export async function replacePhoto(id: string, formData: FormData): Promise<PhotoResult> {
+  await requireAdmin();
   if (!isId(id)) return MISSING;
   const photo = formData.get("photo");
   if (!(photo instanceof File) || photo.size === 0) return { ok: false, error: "No photo received." };
@@ -172,6 +176,7 @@ const cropInput = z
 
 /** Crops the polaroid's photo from its stored original; `null` goes back to the whole photo. */
 export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Promise<PhotoResult> {
+  await requireAdmin();
   if (!isId(id)) return MISSING;
   const parsed = cropInput.safeParse(crop);
   if (!parsed.success) return { ok: false, error: "That crop didn't look right." };

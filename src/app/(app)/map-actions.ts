@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { postcards } from "@/db/schema";
+import { requireAdmin } from "@/lib/session";
 
 const moveInput = z
   .object({
@@ -20,6 +21,7 @@ const moveInput = z
  * constraint stops a published card from losing its location.
  */
 export async function moveCard(input: { id: string; lat: number | null; lng: number | null }) {
+  await requireAdmin();
   const parsed = moveInput.safeParse(input);
   if (!parsed.success) return { ok: false as const };
   const { id, lat, lng } = parsed.data;

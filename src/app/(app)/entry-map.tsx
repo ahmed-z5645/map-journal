@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { StyleSpecification } from "maplibre-gl";
-import Map, { Marker, type MapRef, type MarkerDragEvent } from "react-map-gl/maplibre";
+import Map, { AttributionControl, Marker, type MapRef, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@/lib/maplibre-setup";
 import type { EntryKind, EntryView } from "@/components/entry";
 import { EntryModal } from "@/components/entry-modal";
 import { EntryThumb, MapSticker } from "@/components/entry-thumb";
-import { PersonFilter } from "@/components/person-filter";
 import { formatDate } from "@/lib/dates";
 import { MAP_STYLE, TORONTO, loadScrapbookStyle } from "@/lib/map";
 import { moveCard } from "./map-actions";
+import { SeenProgress, useSeen } from "./seen-progress";
 
 
 export type MapCard = {
@@ -56,13 +56,13 @@ function frameCards(map: MapRef, cards: Located[], animate: boolean) {
 export function EntryMap({
   cards: initialCards,
   focusId,
-  people,
   person,
+  canEdit,
 }: {
   cards: MapCard[];
   focusId?: string;
-  people: Person[];
   person?: Person;
+  canEdit: boolean;
 }) {
   const mapRef = useRef<MapRef>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -102,6 +102,14 @@ export function EntryMap({
   const visible = cards.filter(isLocated).filter((c) => arranging || c.status === "published");
   const unplaced = cards.filter((c) => c.status === "draft" && !isLocated(c));
   const selected = visible.find((c) => c.id === selectedId);
+
+  // Progress counts published entries in the current (person-filtered) view; opening one marks it seen.
+  const { seen, markSeen } = useSeen();
+  const published = cards.filter(isLocated).filter((c) => c.status === "published");
+  const shownId = selected && !arranging && selected.status === "published" ? selected.id : undefined;
+  useEffect(() => {
+    if (shownId) markSeen(shownId);
+  }, [shownId, markSeen]);
   const closeModal = useCallback(() => {
     setSelectedId(undefined);
     // Drop ?card= (set after publishing) so a refresh doesn't reopen it; keep ?person=.
@@ -147,7 +155,7 @@ export function EntryMap({
           onLoad={() => setMapLoaded(true)}
           initialViewState={focus ? { latitude: focus.lat, longitude: focus.lng, zoom: 14 } : { ...TORONTO, zoom: 12 }}
           mapStyle={mapStyle}
-          attributionControl={{ compact: true }}
+          attributionControl={false}
           style={{ width: "100%", height: "100%" }}
           cursor={placingId ? "crosshair" : undefined}
           onClick={(e) => {
@@ -159,6 +167,8 @@ export function EntryMap({
             }
           }}
         >
+          {/* Bottom-left: the bottom-right corner belongs to the app menu. */}
+          <AttributionControl position="bottom-left" compact />
           {visible.map((card) => (
             <Marker
               key={card.id}
@@ -190,30 +200,32 @@ export function EntryMap({
         </Map>
       )}
 
-      <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
-        <button
-          type="button"
-          onClick={toggleArranging}
-          aria-pressed={arranging}
-          className={`-rotate-2 px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${
-            arranging ? "bg-stone-800 text-stone-50" : "bg-[#fbfaf6] text-stone-800"
-          }`}
-        >
-          {arranging ? "Done arranging" : "Arrange"}
-        </button>
-        {arranging && lastMove && (
+      {canEdit && (
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
           <button
             type="button"
-            onClick={() => setLocation(lastMove.id, lastMove.from, false)}
-            className="rotate-1 bg-[#fbfaf6] px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+            onClick={toggleArranging}
+            aria-pressed={arranging}
+            className={`-rotate-2 px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${
+              arranging ? "bg-stone-800 text-stone-50" : "bg-[#fbfaf6] text-stone-800"
+            }`}
           >
-            Undo move
+            {arranging ? "Done arranging" : "Arrange"}
           </button>
-        )}
-      </div>
+          {arranging && lastMove && (
+            <button
+              type="button"
+              onClick={() => setLocation(lastMove.id, lastMove.from, false)}
+              className="rotate-1 bg-[#fbfaf6] px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+            >
+              Undo move
+            </button>
+          )}
+        </div>
+      )}
 
       {arranging && (
-        <div className="absolute bottom-3 left-3 right-3 max-w-sm bg-[#fbfaf6] p-3 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.2)] sm:right-auto">
+        <div className="absolute bottom-20 left-3 right-3 max-w-sm sm:bottom-3 bg-[#fbfaf6] p-3 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.2)] sm:right-auto">
           {placingId ? (
             <div className="flex items-center justify-between gap-2">
               <span>Tap the map where this belongs.</span>
@@ -254,13 +266,16 @@ export function EntryMap({
       )}
 
       {selected && !arranging && (
-        <EntryModal entry={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
+        <EntryModal entry={selected.view} editHref={canEdit ? `/cards/${selected.id}/edit` : undefined} onClose={closeModal} />
       )}
 
-      {people.length > 0 && (
-        <div className="absolute top-3 left-3 rotate-1 bg-[#fbfaf6] px-2 py-1 shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
-          <PersonFilter people={people} selectedId={person?.id} />
-        </div>
+
+      {seen && !arranging && (
+        <SeenProgress
+          seen={published.filter((c) => seen.has(c.id)).length}
+          total={published.length}
+          className="absolute top-3 left-3"
+        />
       )}
 
       {error && (
