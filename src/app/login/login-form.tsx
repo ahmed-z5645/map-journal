@@ -21,7 +21,7 @@ export function LoginForm({ next }: { next?: string }) {
         disabled={pending}
         className="rounded-md bg-stone-800 px-3 py-2 text-stone-50 disabled:opacity-60"
       >
-        {pending ? "Opening…" : "Open the shoebox"}
+        {pending ? "Opening…" : "Open the scrapbook"}
       </button>
       {state.error && <p className="text-sm text-red-700">{state.error}</p>}
     </form>

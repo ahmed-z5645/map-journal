@@ -20,7 +20,7 @@ const Check = () => (
 
 /**
  * Person button for the app menu: "Everyone" or one person, chosen from a popover.
- * Writes ?person= so Map and Shoebox share it.
+ * Writes ?person= so Map and Scrapbook share it.
  */
 export function PersonFilter({ people }: { people: Person[] }) {
   const router = useRouter();

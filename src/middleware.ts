@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidSessionToken, SESSION_COOKIE } from "@/lib/auth";
 
-/** Anyone can look at the Map and Shoebox; everything else (adding, drafts, editing) needs the admin login. */
-const isPublic = (path: string) => path === "/" || path === "/shoebox" || path.startsWith("/shoebox/");
+/** Anyone can look at the Map and Scrapbook; everything else (adding, drafts, editing) needs the admin login. */
+const isPublic = (path: string) => path === "/" || path === "/scrapbook" || path.startsWith("/scrapbook/");
 
 export async function middleware(req: NextRequest) {
   if (isPublic(req.nextUrl.pathname)) return NextResponse.next();

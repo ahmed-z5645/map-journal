@@ -29,7 +29,7 @@ Check R2 end to end with `npm run r2-smoke` (uploads a test image and prints a p
 - `src/db/schema.ts` — `postcards`, `people`, `postcard_people`; migrations in `drizzle/` (`npm run db:generate` after schema changes)
 - `src/lib/` — session (`auth.ts`), password hashing, R2 client, sharp image pipeline
 - `src/middleware.ts` — everything except `/login` and PWA assets requires the session cookie
-- `src/app/(app)/` — Map (`/`, with Arrange mode), Shoebox, Drafts, Add (PWA start URL), card editor (`/cards/[id]/edit`)
+- `src/app/(app)/` — Map (`/`, with Arrange mode), Scrapbook, Drafts, Add (PWA start URL), card editor (`/cards/[id]/edit`)
 - `src/components/postcard.tsx` — the two-sided flip card used everywhere
 
 ## Deploy

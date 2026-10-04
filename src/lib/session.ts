@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { isValidSessionToken, SESSION_COOKIE } from "./auth";
 
-/** Logged in = admin. Everyone else can only look at the Map and Shoebox. */
+/** Logged in = admin. Everyone else can only look at the Map and Scrapbook. */
 export async function isAdmin() {
   return isValidSessionToken((await cookies()).get(SESSION_COOKIE)?.value);
 }

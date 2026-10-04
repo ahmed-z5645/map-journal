@@ -14,10 +14,10 @@ const MapIcon = () => (
     <path d="M9 4v13M15 6.5v13" />
   </svg>
 );
-const BoxIcon = () => (
+const BookIcon = () => (
   <svg viewBox="0 0 24 24" className={icon} {...stroke}>
-    <path d="M3.5 8h17v11a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V8Z" />
-    <path d="M2.5 4.5h19V8h-19zM10 12h4" />
+    <path d="M12 6.5C10.3 5 7.8 4.5 4 4.5v14c3.8 0 6.3.5 8 2 1.7-1.5 4.2-2 8-2v-14c-3.8 0-6.3.5-8 2Z" />
+    <path d="M12 6.5v14" />
   </svg>
 );
 const DraftIcon = () => (
@@ -38,8 +38,8 @@ const LogoutIcon = () => (
 );
 
 /**
- * Floating frosted menu in the bottom-right corner. Map/Shoebox keep the current ?person= filter.
- * Visitors only get Map, Shoebox and the person filter; Drafts, Add and Log out are for the admin
+ * Floating frosted menu in the bottom-right corner. Map/Scrapbook keep the current ?person= filter.
+ * Visitors only get Map, Scrapbook and the person filter; Drafts, Add and Log out are for the admin
  * (who logs in at /login).
  */
 export function AppMenu({
@@ -55,11 +55,11 @@ export function AppMenu({
   const person = useSearchParams().get("person");
   const qs = person ? `?person=${encodeURIComponent(person)}` : "";
   // Choosing a person only means something where entries are shown.
-  const filterable = pathname === "/" || pathname.startsWith("/shoebox");
+  const filterable = pathname === "/" || pathname.startsWith("/scrapbook");
 
   const items = [
     { href: `/${qs}`, label: "Map", active: pathname === "/", Icon: MapIcon },
-    { href: `/shoebox${qs}`, label: "Shoebox", active: pathname.startsWith("/shoebox"), Icon: BoxIcon },
+    { href: `/scrapbook${qs}`, label: "Scrapbook", active: pathname.startsWith("/scrapbook"), Icon: BookIcon },
     ...(admin ? [{ href: "/drafts", label: "Drafts", active: pathname.startsWith("/drafts"), Icon: DraftIcon, badge: drafts }] : []),
   ];
 
