@@ -9,3 +9,24 @@
 body {
   @apply bg-paper text-stone-800 antialiased;
 }
+
+/*
+ * A barely-there paper grain on the main map, like old notepad paper. It's drawn on the canvas
+ * container (under the markers) so the polaroids stay clean.
+ */
+.paper-map .maplibregl-canvas-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.4 0 0 0 0 0.42 0 0 0 0.4 -0.16'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23n%29'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+.paper-map .maplibregl-marker {
+  z-index: 1;
+}
+
+/* Bring a hovered sticker above its neighbours. */
+.maplibregl-marker:hover {
+  z-index: 10;
+}

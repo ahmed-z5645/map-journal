@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { StyleSpecification } from "maplibre-gl";
 import Map, { Marker, type MapRef, type MarkerDragEvent } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@/lib/maplibre-setup";
 import type { EntryKind, EntryView } from "@/components/entry";
 import { EntryModal } from "@/components/entry-modal";
-import { EntryPin, EntryThumb } from "@/components/entry-thumb";
+import { EntryThumb, MapSticker } from "@/components/entry-thumb";
 import { PersonFilter } from "@/components/person-filter";
 import { formatDate } from "@/lib/dates";
-import { MAP_STYLE, TORONTO } from "@/lib/map";
+import { MAP_STYLE, TORONTO, loadScrapbookStyle } from "@/lib/map";
 import { moveCard } from "./map-actions";
 
 
@@ -65,6 +66,11 @@ export function EntryMap({
 }) {
   const mapRef = useRef<MapRef>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  // Plain base style if the scrapbook one can't be fetched.
+  const [mapStyle, setMapStyle] = useState<StyleSpecification | string>();
+  useEffect(() => {
+    loadScrapbookStyle().then(setMapStyle, () => setMapStyle(MAP_STYLE));
+  }, []);
   const framedPerson = useRef<string | undefined>(undefined);
   const [cards, setCards] = useState(initialCards);
   const [arranging, setArranging] = useState(false);
@@ -134,54 +140,63 @@ export function EntryMap({
   }
 
   return (
-    <div className="relative h-full w-full">
-      <Map
-        ref={mapRef}
-        onLoad={() => setMapLoaded(true)}
-        initialViewState={focus ? { latitude: focus.lat, longitude: focus.lng, zoom: 14 } : { ...TORONTO, zoom: 12 }}
-        mapStyle={MAP_STYLE}
-        style={{ width: "100%", height: "100%" }}
-        cursor={placingId ? "crosshair" : undefined}
-        onClick={(e) => {
-          if (placingId) {
-            setLocation(placingId, { lat: e.lngLat.lat, lng: e.lngLat.lng });
-            setPlacingId(undefined);
-          } else {
-            setSelectedId(undefined);
-          }
-        }}
-      >
-        {visible.map((card) => (
-          <Marker
-            key={card.id}
-            latitude={card.lat}
-            longitude={card.lng}
-            anchor="center"
-            draggable={arranging}
-            onDragEnd={(e: MarkerDragEvent) => setLocation(card.id, { lat: e.lngLat.lat, lng: e.lngLat.lng })}
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              if (!arranging) setSelectedId(card.id);
-            }}
-          >
-            <div
-              aria-label={card.title ?? (card.kind === "polaroid" ? "Polaroid" : "Note")}
-              className={arranging ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
+    <div className="paper-map relative h-full w-full bg-[#fcfbf8]">
+      {mapStyle && (
+        <Map
+          ref={mapRef}
+          onLoad={() => setMapLoaded(true)}
+          initialViewState={focus ? { latitude: focus.lat, longitude: focus.lng, zoom: 14 } : { ...TORONTO, zoom: 12 }}
+          mapStyle={mapStyle}
+          attributionControl={{ compact: true }}
+          style={{ width: "100%", height: "100%" }}
+          cursor={placingId ? "crosshair" : undefined}
+          onClick={(e) => {
+            if (placingId) {
+              setLocation(placingId, { lat: e.lngLat.lat, lng: e.lngLat.lng });
+              setPlacingId(undefined);
+            } else {
+              setSelectedId(undefined);
+            }
+          }}
+        >
+          {visible.map((card) => (
+            <Marker
+              key={card.id}
+              latitude={card.lat}
+              longitude={card.lng}
+              anchor="center"
+              draggable={arranging}
+              onDragEnd={(e: MarkerDragEvent) => setLocation(card.id, { lat: e.lngLat.lat, lng: e.lngLat.lng })}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                if (!arranging) setSelectedId(card.id);
+              }}
             >
-              <EntryPin kind={card.kind} draft={card.status === "draft"} />
-            </div>
-          </Marker>
-        ))}
+              <div
+                aria-label={card.title ?? (card.kind === "polaroid" ? "Polaroid" : "Note")}
+                className={arranging ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
+              >
+                <MapSticker
+                  id={card.id}
+                  kind={card.kind}
+                  thumbUrl={card.thumbUrl}
+                  caption={card.kind === "note" ? card.view.body : null}
+                  draft={card.status === "draft"}
+                />
+              </div>
+            </Marker>
+          ))}
 
-      </Map>
+        </Map>
+      )}
 
       <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
         <button
           type="button"
           onClick={toggleArranging}
           aria-pressed={arranging}
-          className={`rounded-md px-3 py-1.5 text-sm shadow ${
-            arranging ? "bg-stone-800 text-stone-50" : "bg-white text-stone-800"
+          className={`-rotate-2 px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${
+            arranging ? "bg-stone-800 text-stone-50" : "bg-[#fbfaf6] text-stone-800"
           }`}
         >
           {arranging ? "Done arranging" : "Arrange"}
@@ -190,7 +205,7 @@ export function EntryMap({
           <button
             type="button"
             onClick={() => setLocation(lastMove.id, lastMove.from, false)}
-            className="rounded-md bg-white px-3 py-1.5 text-sm shadow"
+            className="rotate-1 bg-[#fbfaf6] px-3 py-0.5 font-hand text-xl shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
           >
             Undo move
           </button>
@@ -198,7 +213,7 @@ export function EntryMap({
       </div>
 
       {arranging && (
-        <div className="absolute bottom-3 left-3 right-3 max-w-sm rounded-lg bg-white/95 p-3 text-sm shadow-lg sm:right-auto">
+        <div className="absolute bottom-3 left-3 right-3 max-w-sm bg-[#fbfaf6] p-3 text-sm shadow-[0_4px_10px_rgba(0,0,0,0.2)] sm:right-auto">
           {placingId ? (
             <div className="flex items-center justify-between gap-2">
               <span>Tap the map where this belongs.</span>
@@ -242,7 +257,11 @@ export function EntryMap({
         <EntryModal entry={selected.view} editHref={`/cards/${selected.id}/edit`} onClose={closeModal} />
       )}
 
-      <PersonFilter people={people} selectedId={person?.id} className="absolute top-3 left-3 rounded-md bg-white/90 px-2 py-1 shadow" />
+      {people.length > 0 && (
+        <div className="absolute top-3 left-3 rotate-1 bg-[#fbfaf6] px-2 py-1 shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
+          <PersonFilter people={people} selectedId={person?.id} />
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="absolute top-14 left-1/2 -translate-x-1/2 rounded-md bg-red-50 px-3 py-1.5 text-sm text-red-800 shadow">
