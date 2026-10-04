@@ -1,6 +1,6 @@
 # map-journal
 
-A personal journal of postcards pinned on a map of Toronto. Next.js + Neon Postgres (Drizzle) + Cloudflare R2.
+Ahmed's field notes: polaroids and notes pinned on a map of Toronto. Next.js + Neon Postgres (Drizzle) + Cloudflare R2.
 
 ## Try it locally (no accounts)
 

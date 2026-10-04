@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { SITE_NAME } from "@/lib/site";
 
 const SEEN_KEY = "map-journal:seen";
 
@@ -38,9 +39,23 @@ export function useSeen() {
   return { seen, markSeen };
 }
 
-/** "5 of 17 seen" with a slim bar; frosted to match the app menu. */
-export function SeenProgress({ seen, total, className = "" }: { seen: number; total: number; className?: string }) {
-  if (total === 0) return null;
+/**
+ * Top-left card on the map: the site name, with "5 of 17 seen" and a slim bar under it.
+ * Pass no `progress` (still loading, or arranging) to show just the name.
+ */
+export function MapTitleCard({ progress, className = "" }: { progress?: { seen: number; total: number }; className?: string }) {
+  const showBar = progress && progress.total > 0;
+  return (
+    <div
+      className={`rounded-2xl bg-white/70 px-4 py-2.5 text-stone-700 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 ${className}`}
+    >
+      <h1 className="font-hand text-2xl leading-none text-stone-800">{SITE_NAME}</h1>
+      {showBar && <Progress {...progress} />}
+    </div>
+  );
+}
+
+function Progress({ seen, total }: { seen: number; total: number }) {
   const done = seen >= total;
   return (
     <div
@@ -49,9 +64,9 @@ export function SeenProgress({ seen, total, className = "" }: { seen: number; to
       aria-valuemin={0}
       aria-valuemax={total}
       aria-valuenow={seen}
-      className={`flex items-center gap-2.5 rounded-full bg-white/70 px-3.5 py-2 text-xs text-stone-600 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 ${className}`}
+      className="mt-2 flex items-center gap-2.5 text-xs text-stone-500"
     >
-      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/10">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
         <div
           className={`h-full rounded-full transition-[width] duration-500 ${done ? "bg-emerald-500" : "bg-stone-800"}`}
           style={{ width: `${(Math.min(seen, total) / total) * 100}%` }}

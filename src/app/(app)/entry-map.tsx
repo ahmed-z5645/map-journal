@@ -11,7 +11,7 @@ import { EntryThumb, MapSticker } from "@/components/entry-thumb";
 import { formatDate } from "@/lib/dates";
 import { MAP_STYLE, TORONTO, loadScrapbookStyle } from "@/lib/map";
 import { moveCard } from "./map-actions";
-import { SeenProgress, useSeen } from "./seen-progress";
+import { MapTitleCard, useSeen } from "./seen-progress";
 
 
 export type MapCard = {
@@ -270,13 +270,10 @@ export function EntryMap({
       )}
 
 
-      {seen && !arranging && (
-        <SeenProgress
-          seen={published.filter((c) => seen.has(c.id)).length}
-          total={published.length}
-          className="absolute top-3 left-3"
-        />
-      )}
+      <MapTitleCard
+        progress={seen && !arranging ? { seen: published.filter((c) => seen.has(c.id)).length, total: published.length } : undefined}
+        className="absolute top-3 left-3 w-60 max-w-[calc(100%-9rem)]"
+      />
 
       {error && (
         <p role="alert" className="absolute top-14 left-1/2 -translate-x-1/2 rounded-md bg-red-50 px-3 py-1.5 text-sm text-red-800 shadow">
