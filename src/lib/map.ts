@@ -10,9 +10,9 @@ const PARK = "#d6ebc8";
 const PENCIL = "#b9bcc0";
 const INK = "#6b7078";
 
-// Only these survive; everything else (buildings, paths, rail, highway shields, POIs…) is dropped.
+// Only these survive; everything else (paths, rail, highway shields, POIs…) is dropped.
 const KEEP = new Set([
-  "background", "park", "water", "landcover_wood",
+  "background", "park", "water", "landcover_wood", "building",
   "highway_minor", "highway_major_inner", "highway_motorway_inner",
   "water_name_point_label", "highway-name-minor", "highway-name-major",
   "label_other", "label_city", "label_city_capital",
@@ -30,6 +30,14 @@ function scrapbookLayer(layer: LayerSpecification): LayerSpecification {
     case "park":
     case "landcover_wood":
       l.paint = { "fill-color": PARK, "fill-opacity": 0.7 };
+      break;
+    case "building":
+      // A pale pencil shading of the blocks that fades in as you zoom.
+      l.paint = {
+        "fill-color": "#e9e8e4",
+        "fill-outline-color": "#d6d5d0",
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 0.8],
+      };
       break;
     case "highway_minor":
       l.paint = {
