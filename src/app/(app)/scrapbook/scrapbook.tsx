@@ -31,7 +31,7 @@ export function Scrapbook({ cards, canEdit }: { cards: Card[]; canEdit: boolean 
       <div className="flex flex-col gap-8">
         {months.map((month) => (
           <section key={month.label}>
-            <h2 className="sticky top-3 z-20 mx-4 mb-4 inline-block rounded-full bg-white/75 px-4 py-1.5 text-base font-semibold tracking-tight text-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 sm:mx-6">
+            <h2 className="sticky top-3 z-20 mx-4 mb-4 inline-block rounded-full bg-white/75 px-4 py-1.5 font-type text-base font-bold text-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 backdrop-blur-xl backdrop-saturate-150 sm:mx-6">
               {month.label}
             </h2>
             <ul className="grid grid-cols-3 gap-x-4 gap-y-6 px-4 pt-2 sm:grid-cols-4 sm:gap-x-7 sm:gap-y-9 sm:px-6 lg:grid-cols-6">

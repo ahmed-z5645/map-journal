@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Inter } from "next/font/google";
+import { Courier_Prime, Delicious_Handrawn, Inter } from "next/font/google";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_SHORT_NAME } from "@/lib/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" });
+const handwriting = Delicious_Handrawn({ weight: "400", subsets: ["latin"], variable: "--font-handwriting" });
+const typewriter = Courier_Prime({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-typewriter" });
 
 export const metadata: Metadata = {
   title: SITE_NAME,
@@ -16,7 +17,7 @@ export const viewport: Viewport = { themeColor: "#f7f3ea" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${caveat.variable}`}>
+    <html lang="en" className={`${inter.variable} ${handwriting.variable} ${typewriter.variable}`}>
       <body>{children}</body>
     </html>
   );

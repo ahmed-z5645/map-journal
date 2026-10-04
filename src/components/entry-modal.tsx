@@ -74,8 +74,8 @@ export function EntryModal({
       onPointerUp={onPointerUp}
       className="fixed inset-0 z-50 flex touch-pan-y flex-col items-center justify-center gap-4 bg-stone-900/80 p-4 backdrop-blur-sm"
     >
-      <div className="text-center text-sm text-stone-200">
-        <p className="font-medium">{caption}</p>
+      <div className="text-center font-type text-sm text-stone-200">
+        <p className="font-bold">{caption}</p>
         {entry.people.length > 0 && <p className="text-stone-400">with {entry.people.join(", ")}</p>}
       </div>
       {/* key: a new entry starts face up */}

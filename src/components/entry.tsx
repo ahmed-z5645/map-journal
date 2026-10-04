@@ -107,7 +107,7 @@ export function Polaroid({
           <div className="min-h-0 flex-1 overflow-y-auto font-hand text-[6.5cqmin] leading-[1.3] whitespace-pre-wrap">
             {entry.body || <span className="text-stone-300">Nothing written yet…</span>}
           </div>
-          <div className="space-y-[1cqmin] border-t border-stone-300 pt-[3cqmin] text-[max(11px,3.6cqmin)]">
+          <div className="space-y-[1cqmin] border-t border-stone-300 pt-[3cqmin] font-type text-[max(11px,3.6cqmin)]">
             {entry.people.length > 0 && <p>with {entry.people.join(", ")}</p>}
             {entry.placeLabel && <p>{entry.placeLabel}</p>}
             <p className="text-stone-500">{formatLongDate(entry.capturedAt)}</p>
@@ -141,7 +141,7 @@ export function NotePage({ entry, className = "", style }: { entry: EntryView; c
         >
           {entry.body || <span className="text-stone-300">Nothing written yet…</span>}
         </div>
-        <p className="pointer-events-none absolute right-[6cqw] bottom-[4cqw] font-hand text-[max(13px,4.5cqw)] text-stone-500">
+        <p className="pointer-events-none absolute right-[6cqw] bottom-[4cqw] font-type text-[max(11px,3.6cqw)] text-stone-500">
           {formatLongDate(entry.capturedAt)}
         </p>
       </div>

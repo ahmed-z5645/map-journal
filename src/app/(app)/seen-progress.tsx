@@ -64,7 +64,7 @@ function Progress({ seen, total }: { seen: number; total: number }) {
       aria-valuemin={0}
       aria-valuemax={total}
       aria-valuenow={seen}
-      className="mt-2 flex items-center gap-2.5 text-xs text-stone-500"
+      className="mt-2 flex items-center gap-2.5 font-type text-xs text-stone-500"
     >
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
         <div

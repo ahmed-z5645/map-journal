@@ -16,7 +16,7 @@ export default async function ScrapbookPage({ searchParams }: { searchParams: Pr
     <div className="cork min-h-full pb-28">
       <header className="mx-auto px-4 pt-10 pb-2 sm:px-6">
         <h1 className="text-4xl font-bold tracking-tight text-stone-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.35)]">Scrapbook</h1>
-        <p className="mt-1 text-sm font-medium text-stone-800/70">
+        <p className="mt-1 font-type text-sm text-stone-800/80">
           {rows.length} {rows.length === 1 ? "entry" : "entries"}
           {person && <> with {person.name}</>}
         </p>

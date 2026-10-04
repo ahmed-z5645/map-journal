@@ -2,7 +2,8 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-hand: var(--font-caveat), cursive;
+  --font-hand: var(--font-handwriting), cursive; /* titles, captions, note text */
+  --font-type: var(--font-typewriter), ui-monospace, monospace; /* typed details: dates, places, people, counts */
   --color-paper: #f7f3ea;
 }
 
