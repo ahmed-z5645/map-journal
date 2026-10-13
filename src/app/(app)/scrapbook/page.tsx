@@ -1,7 +1,7 @@
 import { listPostcards } from "@/db/queries";
 import { resolvePersonFilter } from "@/lib/person-filter";
 import { toEntryViews } from "@/lib/entry-views";
-import { presignedGetUrl } from "@/lib/r2";
+import { objectUrl } from "@/lib/storage";
 import { isAdmin } from "@/lib/session";
 import { Scrapbook } from "./scrapbook";
 
@@ -10,7 +10,7 @@ export default async function ScrapbookPage({ searchParams }: { searchParams: Pr
   const rows = await listPostcards("published", person?.id);
   const [views, thumbs] = await Promise.all([
     toEntryViews(rows),
-    Promise.all(rows.map((r) => (r.photoThumbKey ? presignedGetUrl(r.photoThumbKey) : null))),
+    Promise.all(rows.map((r) => (r.photoThumbKey ? objectUrl(r.photoThumbKey) : null))),
   ]);
   return (
     <div className="cork min-h-full pb-28">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getCardWithPeople, listPeople } from "@/db/queries";
-import { presignedGetUrl } from "@/lib/r2";
+import { objectUrl } from "@/lib/storage";
 import { Editor } from "./editor";
 
 export default async function EditCardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,8 +12,8 @@ export default async function EditCardPage({ params }: { params: Promise<{ id: s
   if (!card) notFound();
 
   const [photoUrl, originalUrl] = await Promise.all([
-    card.photoFullKey ? presignedGetUrl(card.photoFullKey) : null,
-    card.photoOriginalKey ? presignedGetUrl(card.photoOriginalKey) : null,
+    card.photoFullKey ? objectUrl(card.photoFullKey) : null,
+    card.photoOriginalKey ? objectUrl(card.photoOriginalKey) : null,
   ]);
 
   return (

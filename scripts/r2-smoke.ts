@@ -2,7 +2,7 @@
 // Usage: npm run r2-smoke
 import sharp from "sharp";
 import { processAndStorePhoto } from "../src/lib/images";
-import { presignedGetUrl } from "../src/lib/r2";
+import { objectUrl } from "../src/lib/storage";
 
 const id = `smoke-test-${Date.now()}`;
 const img = await sharp({ create: { width: 3000, height: 2000, channels: 3, background: "#c8553d" } })
@@ -11,4 +11,4 @@ const img = await sharp({ create: { width: 3000, height: 2000, channels: 3, back
 
 const stored = await processAndStorePhoto(id, img);
 console.log(stored);
-console.log("thumb:", await presignedGetUrl(stored.photoThumbKey, 600));
+console.log("thumb:", await objectUrl(stored.photoThumbKey, 600));

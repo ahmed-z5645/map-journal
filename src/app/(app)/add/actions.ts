@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { postcards } from "@/db/schema";
 import { processAndStorePhoto } from "@/lib/images";
-import { deleteObjects } from "@/lib/r2";
+import { deleteObjects } from "@/lib/storage";
 import { requireAdmin } from "@/lib/session";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { people, postcardPeople, postcards } from "@/db/schema";
 import { processAndStorePhoto, recropPhoto } from "@/lib/images";
-import { deleteObjects, photoKeys, presignedGetUrl } from "@/lib/r2";
+import { deleteObjects, objectUrl } from "@/lib/storage";
 import { requireAdmin } from "@/lib/session";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -117,21 +117,31 @@ export async function deleteDraft(id: string): Promise<Result> {
   const [deleted] = await getDb()
     .delete(postcards)
     .where(sql`${postcards.id} = ${id} and ${postcards.status} = 'draft'`)
-    .returning({ id: postcards.id, hadPhoto: postcards.photoOriginalKey });
+    .returning({ original: postcards.photoOriginalKey, full: postcards.photoFullKey, thumb: postcards.photoThumbKey });
   if (!deleted) return { ok: false, error: "Only drafts can be deleted." };
-  if (deleted.hadPhoto) {
-    const k = photoKeys(id);
-    await deleteObjects([k.original, k.full, k.thumb]).catch((err) => console.error("deleteDraft: R2 cleanup", err));
+  if (deleted.original) {
+    await deleteObjects([deleted.original, deleted.full, deleted.thumb]).catch((err) =>
+      console.error("deleteDraft: photo cleanup", err),
+    );
   }
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/**
+ * After a photo is replaced or re-cropped, removes the old files that are no longer referenced.
+ * With R2 the keys are reused (so nothing goes); with Blob every upload gets a new URL.
+ */
+async function deleteReplaced(oldRefs: (string | null)[], newRefs: string[]) {
+  const stale = oldRefs.filter((r): r is string => !!r && !newRefs.includes(r));
+  await deleteObjects(stale).catch((err) => console.error("photo cleanup failed", err));
 }
 
 type PhotoResult = Result<{ photoUrl: string; originalUrl: string; photoWidth: number; photoHeight: number }>;
 
 async function photoResult(fullKey: string, originalKey: string, width: number, height: number): Promise<PhotoResult> {
   revalidatePath("/", "layout");
-  const [photoUrl, originalUrl] = await Promise.all([presignedGetUrl(fullKey), presignedGetUrl(originalKey)]);
+  const [photoUrl, originalUrl] = await Promise.all([objectUrl(fullKey), objectUrl(originalKey)]);
   return { ok: true, photoUrl, originalUrl, photoWidth: width, photoHeight: height };
 }
 
@@ -142,7 +152,13 @@ export async function replacePhoto(id: string, formData: FormData): Promise<Phot
   if (!(photo instanceof File) || photo.size === 0) return { ok: false, error: "No photo received." };
   if (photo.size > MAX_PHOTO_BYTES) return { ok: false, error: "Photo is too large." };
 
-  const [entry] = await getDb().select({ kind: postcards.kind }).from(postcards).where(eq(postcards.id, id));
+  const [entry] = await getDb()
+    .select({
+      kind: postcards.kind,
+      oldRefs: sql<(string | null)[]>`array[${postcards.photoOriginalKey}, ${postcards.photoFullKey}, ${postcards.photoThumbKey}]`,
+    })
+    .from(postcards)
+    .where(eq(postcards.id, id));
   if (!entry) return MISSING;
   if (entry.kind !== "polaroid") return { ok: false, error: "Notes don't have photos." };
 
@@ -157,6 +173,7 @@ export async function replacePhoto(id: string, formData: FormData): Promise<Phot
       await deleteObjects([stored.photoOriginalKey, stored.photoFullKey, stored.photoThumbKey]).catch(() => {});
       return MISSING;
     }
+    await deleteReplaced(entry.oldRefs, [stored.photoOriginalKey, stored.photoFullKey, stored.photoThumbKey]);
     return photoResult(stored.photoFullKey, stored.photoOriginalKey, stored.photoWidth, stored.photoHeight);
   } catch (err) {
     console.error("replacePhoto failed", err);
@@ -182,7 +199,7 @@ export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Pr
   if (!parsed.success) return { ok: false, error: "That crop didn't look right." };
 
   const [card] = await getDb()
-    .select({ originalKey: postcards.photoOriginalKey })
+    .select({ originalKey: postcards.photoOriginalKey, fullKey: postcards.photoFullKey, thumbKey: postcards.photoThumbKey })
     .from(postcards)
     .where(eq(postcards.id, id));
   if (!card?.originalKey) return { ok: false, error: "This entry has no photo to crop." };
@@ -191,8 +208,9 @@ export async function cropPhoto(id: string, crop: z.input<typeof cropInput>): Pr
     const derived = await recropPhoto(id, card.originalKey, parsed.data);
     await getDb()
       .update(postcards)
-      .set({ photoWidth: derived.photoWidth, photoHeight: derived.photoHeight })
+      .set(derived)
       .where(eq(postcards.id, id));
+    await deleteReplaced([card.fullKey, card.thumbKey], [derived.photoFullKey, derived.photoThumbKey]);
     return photoResult(derived.photoFullKey, card.originalKey, derived.photoWidth, derived.photoHeight);
   } catch (err) {
     console.error("cropPhoto failed", err);

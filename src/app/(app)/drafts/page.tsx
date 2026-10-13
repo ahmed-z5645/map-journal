@@ -2,11 +2,11 @@ import Link from "next/link";
 import { EntryThumb } from "@/components/entry-thumb";
 import { listPostcards } from "@/db/queries";
 import { formatDateTime } from "@/lib/dates";
-import { presignedGetUrl } from "@/lib/r2";
+import { objectUrl } from "@/lib/storage";
 
 export default async function DraftsPage() {
   const drafts = await listPostcards("draft");
-  const thumbs = await Promise.all(drafts.map((d) => (d.photoThumbKey ? presignedGetUrl(d.photoThumbKey) : null)));
+  const thumbs = await Promise.all(drafts.map((d) => (d.photoThumbKey ? objectUrl(d.photoThumbKey) : null)));
 
   return (
     <div className="mx-auto max-w-2xl p-4 pb-28">

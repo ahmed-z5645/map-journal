@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { getObjectBuffer, photoKeys, putObject } from "./r2";
+import { getObjectBuffer, photoKeys, putObject } from "./storage";
 
 const FULL_MAX = 2000;
 const THUMB_MAX = 400;
@@ -36,11 +36,14 @@ async function storeDerived(postcardId: string, original: Buffer, crop?: Crop) {
       .toBuffer(),
   ]);
 
-  await Promise.all([putObject(keys.full, full.data, "image/webp"), putObject(keys.thumb, thumb, "image/webp")]);
+  const [fullRef, thumbRef] = await Promise.all([
+    putObject(keys.full, full.data, "image/webp"),
+    putObject(keys.thumb, thumb, "image/webp"),
+  ]);
 
   return {
-    photoFullKey: keys.full,
-    photoThumbKey: keys.thumb,
+    photoFullKey: fullRef,
+    photoThumbKey: thumbRef,
     photoWidth: full.info.width,
     photoHeight: full.info.height,
   };
@@ -54,11 +57,11 @@ export async function processAndStorePhoto(postcardId: string, input: Buffer) {
   const keys = photoKeys(postcardId);
   // .rotate() applies EXIF orientation, so crop fractions match what the browser shows.
   const original = await sharp(input).rotate().jpeg({ quality: 90 }).toBuffer();
-  await putObject(keys.original, original, "image/jpeg");
-  return { photoOriginalKey: keys.original, ...(await storeDerived(postcardId, original)) };
+  const originalRef = await putObject(keys.original, original, "image/jpeg");
+  return { photoOriginalKey: originalRef, ...(await storeDerived(postcardId, original)) };
 }
 
 /** Re-derives full + thumb from the stored original with a new crop, or the whole photo when `crop` is null. */
-export async function recropPhoto(postcardId: string, originalKey: string, crop: Crop | null) {
-  return storeDerived(postcardId, await getObjectBuffer(originalKey), crop ?? undefined);
+export async function recropPhoto(postcardId: string, originalRef: string, crop: Crop | null) {
+  return storeDerived(postcardId, await getObjectBuffer(originalRef), crop ?? undefined);
 }

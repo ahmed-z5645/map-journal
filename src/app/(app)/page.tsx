@@ -1,7 +1,7 @@
 import { listMapCards } from "@/db/queries";
 import { resolvePersonFilter } from "@/lib/person-filter";
 import { toEntryViews } from "@/lib/entry-views";
-import { presignedGetUrl } from "@/lib/r2";
+import { objectUrl } from "@/lib/storage";
 import { isAdmin } from "@/lib/session";
 import { EntryMap, type MapCard } from "./entry-map";
 
@@ -22,7 +22,7 @@ export default async function MapPage({ searchParams }: { searchParams: Promise<
       title: r.title,
       quickNote: r.quickNote,
       capturedAt: r.capturedAt.toISOString(),
-      thumbUrl: r.photoThumbKey ? await presignedGetUrl(r.photoThumbKey) : null,
+      thumbUrl: r.photoThumbKey ? await objectUrl(r.photoThumbKey) : null,
       view: views[i],
     })),
   );
