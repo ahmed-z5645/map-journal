@@ -12,6 +12,9 @@ type DeviceLocation =
 
 type Photo = { blob: Blob; previewUrl: string; meta: PhotoMeta };
 
+/** A photo taken within this long ago was probably taken right here, so the device location fits it. */
+const FRESH_PHOTO_MS = 30 * 60 * 1000;
+
 function useDeviceLocation() {
   const [loc, setLoc] = useState<DeviceLocation>({ state: "locating" });
   const locate = () => {
@@ -65,13 +68,15 @@ export function CaptureForm() {
     }
   }
 
-  // Photo GPS wins: it's where the picture was taken, which matters for photos picked from the library.
-  const location =
-    photo?.meta.lat !== undefined && photo.meta.lng !== undefined
-      ? { lat: photo.meta.lat, lng: photo.meta.lng, accuracy: undefined, source: "photo" as const }
-      : device.state === "found"
-        ? { ...device, source: "device" as const }
-        : undefined;
+  // Photo GPS wins: it's where the picture was taken. Without it, where the phone is now only stands in
+  // for a photo taken just now; an older one from the library is left for placing on the map instead.
+  const photoHasGps = photo?.meta.lat !== undefined && photo.meta.lng !== undefined;
+  const photoIsOld = !!photo?.meta.takenAt && Date.now() - photo.meta.takenAt.getTime() > FRESH_PHOTO_MS;
+  const location = photoHasGps
+    ? { lat: photo!.meta.lat!, lng: photo!.meta.lng!, accuracy: undefined, source: "photo" as const }
+    : device.state === "found" && !photoIsOld
+      ? { ...device, source: "device" as const }
+      : undefined;
 
   function submit() {
     const fd = new FormData();
@@ -147,6 +152,13 @@ export function CaptureForm() {
                 {location.lat.toFixed(5)}, {location.lng.toFixed(5)}{" "}
                 <span className="text-stone-400">
                   ({location.source === "photo" ? "from photo" : `±${Math.round(location.accuracy)} m`})
+                </span>
+              </>
+            ) : photoIsOld ? (
+              <>
+                This photo has no location, so you'll place it on the map when publishing.{" "}
+                <span className="text-stone-400">
+                  On iPhone, tap Options at the top of the photo picker and turn on Location to keep it.
                 </span>
               </>
             ) : device.state === "locating" ? (

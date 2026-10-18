@@ -7,7 +7,7 @@ Once it's set up, deploying is just pushing to `main`.
 ## What's public
 
 - **Anyone with the link** can see the Map (`/`) and the Scrapbook (`/scrapbook`): published entries only, with their photos, notes, places and people.
-- **Only you** (logged in at `/login`) can add, edit, arrange, publish and delete entries, and see drafts. The server enforces this on every page and action, not just by hiding buttons.
+- **Only you** (logged in at `/admin` or `/login`) can add, edit, arrange, publish and delete entries, and see drafts. The server enforces this on every page and action, not just by hiding buttons.
 
 ## 1. Database (Neon)
 
