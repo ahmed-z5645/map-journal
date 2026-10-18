@@ -87,6 +87,26 @@ const GREEN_SPACES: LayerSpecification[] = [
   },
 ];
 
+// Park names, in a deeper green. They're POIs in the tiles (from zoom 14); the most notable parks win
+// any space contest. Placed under the street names, so a street keeps its label over a parkette.
+const PARK_NAMES: LayerSpecification = {
+  id: "park_names",
+  type: "symbol",
+  source: "openmaptiles",
+  "source-layer": "poi",
+  minzoom: 14,
+  filter: ["==", ["get", "class"], "park"],
+  layout: {
+    "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
+    "text-font": ["Noto Sans Italic"],
+    "text-size": ["interpolate", ["linear"], ["zoom"], 14, 10.5, 17, 13],
+    "text-letter-spacing": 0.05,
+    "text-max-width": 7,
+    "symbol-sort-key": ["get", "rank"],
+  },
+  paint: { "text-color": "#5c8a4e", "text-halo-color": PAPER, "text-halo-width": 1.5 },
+};
+
 let cached: Promise<StyleSpecification> | undefined;
 
 /** The base style, stripped and recoloured to look like a watercolour sketch. Fetched once per page load. */
@@ -95,6 +115,8 @@ export function loadScrapbookStyle(): Promise<StyleSpecification> {
     .then((r) => r.json() as Promise<StyleSpecification>)
     .then((style) => {
       const [background, ...rest] = style.layers.filter((l) => KEEP.has(l.id)).map(scrapbookLayer);
+      const firstLabel = rest.findIndex((l) => l.type === "symbol");
+      rest.splice(firstLabel < 0 ? rest.length : firstLabel, 0, PARK_NAMES);
       return { ...style, layers: [background, ...GREEN_SPACES, ...rest] };
     })
     .catch((err) => {
