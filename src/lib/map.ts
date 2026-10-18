@@ -107,6 +107,29 @@ const PARK_NAMES: LayerSpecification = {
   paint: { "text-color": "#5c8a4e", "text-halo-color": PAPER, "text-halo-width": 1.5 },
 };
 
+// Landmarks: the sights, not the shops. Also POIs from zoom 14, in a dusty plum and placed before parks.
+const LANDMARKS: LayerSpecification = {
+  id: "landmark_names",
+  type: "symbol",
+  source: "openmaptiles",
+  "source-layer": "poi",
+  minzoom: 14,
+  filter: [
+    "any",
+    ["match", ["get", "class"], ["attraction", "museum", "stadium", "aquarium", "zoo", "castle"], true, false],
+    ["match", ["get", "subclass"], ["townhall", "university"], true, false],
+  ],
+  layout: {
+    "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
+    "text-font": ["Noto Sans Bold"],
+    "text-size": ["interpolate", ["linear"], ["zoom"], 14, 10.5, 17, 13],
+    "text-letter-spacing": 0.04,
+    "text-max-width": 8,
+    "symbol-sort-key": ["get", "rank"],
+  },
+  paint: { "text-color": "#8a6a96", "text-halo-color": PAPER, "text-halo-width": 1.5 },
+};
+
 let cached: Promise<StyleSpecification> | undefined;
 
 /** The base style, stripped and recoloured to look like a watercolour sketch. Fetched once per page load. */
@@ -116,7 +139,7 @@ export function loadScrapbookStyle(): Promise<StyleSpecification> {
     .then((style) => {
       const [background, ...rest] = style.layers.filter((l) => KEEP.has(l.id)).map(scrapbookLayer);
       const firstLabel = rest.findIndex((l) => l.type === "symbol");
-      rest.splice(firstLabel < 0 ? rest.length : firstLabel, 0, PARK_NAMES);
+      rest.splice(firstLabel < 0 ? rest.length : firstLabel, 0, PARK_NAMES, LANDMARKS);
       return { ...style, layers: [background, ...GREEN_SPACES, ...rest] };
     })
     .catch((err) => {
